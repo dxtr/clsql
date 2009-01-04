@@ -1261,15 +1261,19 @@ as elements of a list."
            (when (and order-by (= 1 (length target-args)))
              (let ((table-name (view-table (find-class (car target-args))))
                    (order-by-list (copy-seq (listify order-by))))
-
-               (loop for i from 0 below (length order-by-list)
-                  do (etypecase (nth i order-by-list)
-                       (sql-ident-attribute
-                        (unless (slot-value (nth i order-by-list) 'qualifier)
-                          (setf (slot-value (nth i order-by-list) 'qualifier) table-name)))
-                       (cons
-                        (unless (slot-value (car (nth i order-by-list)) 'qualifier)
-                          (setf (slot-value (car (nth i order-by-list)) 'qualifier) table-name)))))
+               (labels ((set-table-if-needed (val)
+                          (typecase val
+                            (sql-ident-attribute
+                             (handler-case
+                                 (unless (slot-value val 'qualifier)
+                                   (setf (slot-value val 'qualifier) table-name))
+                               (simple-error ()
+                                 ;; TODO: Check for a specific error we expect
+                                 )))
+                            (cons (set-table-if-needed (car val))))))
+                 (loop for i from 0 below (length order-by-list)
+                       for id = (nth i order-by-list)
+                       do (set-table-if-needed id)))
                (setf (getf qualifier-args :order-by) order-by-list)))
 
            (cond
