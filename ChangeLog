@@ -1,3 +1,11 @@
+2011-06-12  Kevin Rosenberg <kevin@rosenberg.net>
+	* db-postgresql-socket/postgresql-socket-api.lisp:
+	Patch from Otto Diesenbacher for UTF8 encoded strings
+	for CCL. FIXME: The best patch would be to use the
+	user-set encoding from the database object and use
+	UFFI's encoding strings to/from octet vectors rather
+	than SB-UNICODE and CCL specific code in this file.
+
 2011-04-21  Kevin Rosenberg <kevin@rosenberg.net>
 	* sql/generics.lisp: Add defgeneric for new
 	database-last-auto-increment-id

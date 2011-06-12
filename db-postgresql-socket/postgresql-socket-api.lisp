@@ -17,6 +17,15 @@
 
 (in-package #:postgresql-socket)
 
+;; KMR: 2011-06-12
+;; FIXME: The file has code specific to sb-unicode and CCL
+;; to assume UTF8 encoded strings.
+;; Best fix would be to use the user-specified encoding that is now
+;; stored in the database object and use the UFFI 2.x encoding functions
+;; to convert strings to/from octet vectors. This allows encoding
+;; other than UTF8 and also works on all CL implementations that
+;; support wide character strings
+
 (uffi:def-enum pgsql-ftype
     ((:bytea 17)
      (:int2 21)
@@ -105,13 +114,18 @@ socket interface"
 (defun send-socket-value-string (socket value)
   (declare (type stream socket)
            (type string value))
-  #-sb-unicode
+  #-(or sb-unicode ccl)
   (loop for char across value
-        for code = (char-code char)
-        do (write-byte code socket)
-        finally (write-byte 0 socket))
+     for code = (char-code char)
+     do (write-byte code socket)
+     finally (write-byte 0 socket))
+  #+ccl
+  (write-sequence (ccl:encode-string-to-octets
+                   value :external-format :utf-8) socket)
+  (write-byte 0 socket)
   #+sb-unicode
-  (write-sequence (sb-ext:string-to-octets value :null-terminate t) socket)
+  (write-sequence (sb-ext:string-to-octets value :null-terminate t)
+                  socket)
   nil)
 
 (defun send-socket-value-limstring (socket value limit)
@@ -150,23 +164,32 @@ socket interface"
   (declare (type stream socket))
   (read-byte socket))
 
+
 (defun read-socket-value-string (socket)
   (declare (type stream socket))
-  #-sb-unicode
+  #-(or sb-unicode ccl)
   (with-output-to-string (out)
     (loop for code = (read-byte socket)
-          until (zerop code)
-          do (write-char (code-char code) out)))
+       until (zerop code)
+       do (write-char (code-char code) out)))
+  #+ccl
+  (let ((bytes (make-array 64
+                           :element-type '(unsigned-byte 8)
+                           :adjustable t
+                           :fill-pointer 0)))
+    (loop for code = (read-byte socket)
+       until (zerop code)
+       do (vector-push-extend code bytes))
+    (ccl:decode-string-from-octets bytes :external-format :utf-8))
   #+sb-unicode
   (let ((bytes (make-array 64
                            :element-type '(unsigned-byte 8)
                            :adjustable t
                            :fill-pointer 0)))
     (loop for code = (read-byte socket)
-          until (zerop code)
+       until (zerop code)
           do (vector-push-extend code bytes))
     (sb-ext:octets-to-string bytes)))
-
 
 (defmacro define-message-sender (name (&rest args) &rest clauses)
   (let ((socket-var (gensym))
@@ -214,11 +237,18 @@ socket interface"
 (defun read-socket-sequence (stream length &optional (allow-wide t))
   (declare (stream stream)
            (optimize (speed 3) (safety 0)))
-  #-sb-unicode
+  #-(or sb-unicode ccl)
   (let ((result (make-string length)))
     (dotimes (i length result)
       (declare (fixnum i))
       (setf (char result i) (code-char (read-byte stream)))))
+  #+ccl
+  (let ((bytes (make-array length :element-type '(unsigned-byte 8))))
+    (declare (type (simple-array (unsigned-byte 8) (*)) bytes))
+    (read-sequence bytes stream)
+    (if allow-wide
+	(ccl:decode-string-from-octets bytes :external-format :utf-8)
+	(map 'string #'code-char bytes)))
   #+sb-unicode
   (let ((bytes (make-array length :element-type '(unsigned-byte 8))))
     (declare (type (simple-array (unsigned-byte 8) (*)) bytes))
