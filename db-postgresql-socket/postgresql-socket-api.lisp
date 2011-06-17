@@ -122,6 +122,7 @@ socket interface"
   #+ccl
   (write-sequence (ccl:encode-string-to-octets
                    value :external-format :utf-8) socket)
+  #+ccl
   (write-byte 0 socket)
   #+sb-unicode
   (write-sequence (sb-ext:string-to-octets value :null-terminate t)
