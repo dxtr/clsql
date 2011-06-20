@@ -1,3 +1,9 @@
+2011-06-20  Nathan Bird  <nathan@acceleration.net>
+
+	* db-postgresql-socket/postgresql-socket-api.lisp: Addendum
+	to Otto Diesenbacher's patch that had a spurious write a 0
+	byte (to terminate string) that should have been just CCL.
+
 2011-06-12  Kevin Rosenberg <kevin@rosenberg.net>
 	* db-postgresql-socket/postgresql-socket-api.lisp:
 	Patch from Otto Diesenbacher for UTF8 encoded strings
