@@ -337,6 +337,12 @@
 ;; Write SQL for relational operators (like 'AND' and 'OR').
 ;; should do arity checking of subexpressions
 
+(defun %write-operator (operator database)
+  (typecase operator
+    (string (write-string operator *sql-stream*))
+    (symbol (write-string (symbol-name operator) *sql-stream*))
+    (T (output-sql operator database))))
+
 (defmethod output-sql ((expr sql-relational-exp) database)
   (with-slots (operator sub-expressions) expr
      ;; we do this as two runs so as not to emit confusing superflous parentheses
@@ -361,7 +367,9 @@
 	      (loop for str-sub in (rest str-subs)
 		    do
 		 (write-char #\Space *sql-stream*)
-		 (output-sql operator database)
+                 ;; do this so that symbols can be output as database identifiers
+                 ;; rather than allowing symbols to inject sql
+		 (%write-operator operator database)
 		 (write-char #\Space *sql-stream*)
 		 (write-string str-sub *sql-stream*))
 	      (write-char #\) *sql-stream*))
@@ -402,7 +410,7 @@
         ((null (cdr sub)) (output-sql (car sub) database))
       (output-sql (car sub) database)
       (write-char #\Space *sql-stream*)
-      (output-sql operator database)
+      (%write-operator operator database)
       (write-char #\Space *sql-stream*)))
   t)
 
@@ -435,7 +443,14 @@
     (if modifier
         (progn
           (write-char #\( *sql-stream*)
-          (output-sql modifier database)
+          (cond
+            ((sql-operator modifier)
+             (%write-operator modifier database))
+            ((or (stringp modifier) (symbolp modifier))
+             (write-string
+              (escaped-database-identifier modifier)
+              *sql-stream*))
+            (t (output-sql modifier database)))
           (write-char #\Space *sql-stream*)
           (output-sql components database)
           (write-char #\) *sql-stream*))
@@ -475,7 +490,10 @@
 (defmethod output-sql ((expr sql-function-exp) database)
   (with-slots (name args)
     expr
-    (output-sql name database)
+    (typecase name
+      ((or string symbol)
+       (write-string (escaped-database-identifier name) *sql-stream*))
+      (t (output-sql name database)))
     (let ((*in-subselect* nil)) ;; aboid double parens
       (when args (output-sql args database))))
   t)
@@ -505,7 +523,7 @@
       expr
     (%write-operator modifier database)
     (write-string " " *sql-stream*)
-    (output-sql (car components) database)
+    (%write-operator (car components) database)
     (when components
       (mapc #'(lambda (comp)
                 (write-string ", " *sql-stream*)
@@ -536,13 +554,13 @@
                     (car sub-expressions)
                     sub-expressions)))
       (when (= (length subs) 1)
-        (output-sql operator database)
+        (%write-operator operator database)
         (write-char #\Space *sql-stream*))
       (do ((sub subs (cdr sub)))
           ((null (cdr sub)) (output-sql (car sub) database))
         (output-sql (car sub) database)
         (write-char #\Space *sql-stream*)
-        (output-sql operator database)
+        (%write-operator operator database)
         (write-char #\Space *sql-stream*))))
   t)
 
@@ -987,9 +1005,9 @@ uninclusive, and the args from that keyword to the end."
   (defmethod database-output-sql ((sym symbol) database)
   (if (null sym)
       +null-string+
-    (if (equal (symbol-package sym) keyword-package)
-        (concatenate 'string "'" (string sym) "'")
-      (symbol-name sym)))))
+      (if (equal (symbol-package sym) keyword-package)
+          (database-output-sql (symbol-name sym) database)
+          (escaped-database-identifier sym)))))
 
 (defmethod database-output-sql ((tee (eql t)) database)
   (if database
