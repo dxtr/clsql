@@ -421,7 +421,7 @@
 (defmethod output-sql ((expr sql-query-modifier-exp) database)
   (with-slots (modifier components)
       expr
-    (output-sql modifier database)
+    (%write-operator modifier database)
     (write-string " " *sql-stream*)
     (output-sql (car components) database)
     (when components
@@ -586,10 +586,6 @@ uninclusive, and the args from that keyword to the end."
     (when *in-subselect*
       (write-string "(" *sql-stream*))
     (write-string "SELECT " *sql-stream*)
-    (when (and limit (eql :mssql (database-underlying-type database)))
-      (write-string " TOP " *sql-stream*)
-      (output-sql limit database)
-      (write-string " " *sql-stream*))
     (when all
       (write-string " ALL " *sql-stream*))
     (when (and distinct (not all))
@@ -598,6 +594,10 @@ uninclusive, and the args from that keyword to the end."
         (write-string " ON " *sql-stream*)
         (output-sql distinct database)
         (write-char #\Space *sql-stream*)))
+    (when (and limit (eql :mssql (database-underlying-type database)))
+      (write-string " TOP " *sql-stream*)
+      (output-sql limit database)
+      (write-string " " *sql-stream*))
     (let ((*in-subselect* t))
       (output-sql (apply #'vector selections) database))
     (when from
