@@ -966,7 +966,7 @@
 (defconstant $SQL_FETCH_RELATIVE 6)
 (defconstant $SQL_FETCH_BOOKMARK 8)
 
-;;; ODBC v3 constants, added by KMR
+;;; ODBC3 constants, added by KMR
 
 (defconstant $SQL_ATTR_ODBC_VERSION 200)
 (defconstant $SQL_OV_ODBC2 2)

@@ -1,3 +1,6 @@
+2011-06-27  Nathan Bird  <nathan@acceleration.net>
+	* db-odbc/: memory management improvements: leak slower
+
 2011-06-20  Nathan Bird  <nathan@acceleration.net>
 
 	* sql/time.lisp: Handle parsing already parsed objects.

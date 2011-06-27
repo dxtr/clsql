@@ -21,13 +21,21 @@
 (def-foreign-type string-ptr (* :unsigned-char))
 (def-type long-ptr-type (* #.$ODBC-LONG-TYPE))
 
-;; odbc v3
+;; ODBC3
 (def-function "SQLAllocHandle"
     ((handle-type :short)
      (input-handle sql-handle)
      (*phenv sql-handle-ptr))
   :module "odbc"
   :returning :short)
+
+;; ODBC3 version of SQLFreeStmt, SQLFreeConnect, and SSQLFreeStmt
+(def-function "SQLFreeHandle"
+    ((handle-type :short)        ; HandleType
+     (input-handle sql-handle))  ; Handle
+  :module "odbc"
+  :returning :short)              ; RETCODE_SQL_API
+
 
 ;; deprecated
 (def-function "SQLAllocEnv"
@@ -70,6 +78,13 @@
   :returning :short)              ; RETCODE_SQL_API
 
 (def-function "SQLDisconnect"
+    ((hdbc sql-handle))         ; HDBC        hdbc
+  :module "odbc"
+  :returning :short)              ; RETCODE_SQL_API
+
+
+;;deprecated
+(def-function "SQLFreeConnect"
     ((hdbc sql-handle))         ; HDBC        hdbc
   :module "odbc"
   :returning :short)              ; RETCODE_SQL_API

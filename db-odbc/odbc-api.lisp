@@ -61,38 +61,48 @@ as possible second argument) to the desired representation of date/time/timestam
     (incf offset))
   offset)
 
+(defmacro with-allocate-foreign-string ((var len) &body body)
+  "Safely does uffi:allocate-foreign-string-- making sure we do the uffi:free-foreign-object"
+  `(let ((,var))
+    (unwind-protect
+         (progn
+           (setf ,var (uffi:allocate-foreign-string ,len))
+           ,@body)
+      (when ,var
+        (uffi:free-foreign-object ,var)))))
+
+(defmacro with-allocate-foreign-strings (bindings &rest body)
+  (if bindings
+      `(with-allocate-foreign-string ,(car bindings)
+        (with-allocate-foreign-strings ,(cdr bindings)
+          ,@body))
+      `(progn ,@body)))
+
 (defun handle-error (henv hdbc hstmt)
-  (let ((sql-state (allocate-foreign-string 256))
-        (error-message (allocate-foreign-string #.$SQL_MAX_MESSAGE_LENGTH)))
-    (with-foreign-objects ((error-code #.$ODBC-LONG-TYPE)
-                           (msg-length :short))
-      (SQLError henv hdbc hstmt sql-state
-                error-code error-message
-                #.$SQL_MAX_MESSAGE_LENGTH msg-length)
-      (let ((err (convert-from-foreign-string error-message))
-            (state (convert-from-foreign-string sql-state)))
-        (free-foreign-object error-message)
-        (free-foreign-object sql-state)
-        (values
-         err
-         state
-         (deref-pointer msg-length :short)
-         (deref-pointer error-code #.$ODBC-LONG-TYPE))))))
+  (with-allocate-foreign-strings ((sql-state 256)
+                                  (error-message #.$SQL_MAX_MESSAGE_LENGTH))
+   (with-foreign-objects ((error-code #.$ODBC-LONG-TYPE)
+                          (msg-length :short))
+    (SQLError henv hdbc hstmt sql-state
+              error-code error-message
+              #.$SQL_MAX_MESSAGE_LENGTH msg-length)
+    (values
+     (convert-from-foreign-string error-message)
+     (convert-from-foreign-string sql-state)
+     (deref-pointer msg-length :short)
+     (deref-pointer error-code #.$ODBC-LONG-TYPE)))))
 
 (defun sql-state (henv hdbc hstmt)
-  (let ((sql-state (allocate-foreign-string 256))
-        (error-message (allocate-foreign-string #.$SQL_MAX_MESSAGE_LENGTH)))
-    (with-foreign-objects ((error-code #.$ODBC-LONG-TYPE)
-                           (msg-length :short))
-      (SQLError henv hdbc hstmt sql-state error-code
-                error-message #.$SQL_MAX_MESSAGE_LENGTH msg-length)
-      (let ((state (convert-from-foreign-string sql-state)))
-        (free-foreign-object error-message)
-        (free-foreign-object sql-state)
-        state
-        ;; test this: return a keyword for efficiency
-        ;;(%cstring-to-keyword state)
-        ))))
+  (with-allocate-foreign-strings ((sql-state 256)
+                                  (error-message #.$SQL_MAX_MESSAGE_LENGTH))
+   (with-foreign-objects ((error-code #.$ODBC-LONG-TYPE)
+                          (msg-length :short))
+    (SQLError henv hdbc hstmt sql-state error-code
+              error-message #.$SQL_MAX_MESSAGE_LENGTH msg-length)
+    (convert-from-foreign-string sql-state)
+    ;; test this: return a keyword for efficiency
+    ;;(%cstring-to-keyword state)
+    )))
 
 (defmacro with-error-handling ((&key henv hdbc hstmt (print-info t))
                                    odbc-call &body body)
@@ -209,23 +219,24 @@ as possible second argument) to the desired representation of date/time/timestam
 
 (defun %sql-driver-connect (hdbc connection-string completion window-handle)
   (with-cstring (connection-ptr connection-string)
-    (let ((completed-connection-string (allocate-foreign-string $SQL_MAX_CONN_OUT)))
-      (unwind-protect
-          (with-foreign-object (completed-connection-length :short)
-                               (with-error-handling
-                                   (:hdbc hdbc)
-                                   (SQLDriverConnect hdbc
-                                                     window-handle
-                                                     connection-ptr $SQL_NTS
-                                                     completed-connection-string $SQL_MAX_CONN_OUT
-                                                     completed-connection-length
-                                                     completion)))
-        (free-foreign-object completed-connection-string)))))
+    (with-allocate-foreign-string (completed-connection-string-ptr $SQL_MAX_CONN_OUT)
+      (with-foreign-object (completed-connection-length :short)
+       (with-error-handling
+           (:hdbc hdbc)
+           (SQLDriverConnect hdbc
+                             window-handle
+                             connection-ptr $SQL_NTS
+                             completed-connection-string-ptr $SQL_MAX_CONN_OUT
+                             completed-connection-length
+                             completion))))))
 
 (defun %disconnect (hdbc)
   (with-error-handling
     (:hdbc hdbc)
-    (SQLDisconnect hdbc)))
+    (SQLDisconnect hdbc)
+    (with-error-handling
+        (:hdbc hdbc)
+        (SQLFreeHandle $SQL_HANDLE_DBC hdbc))))
 
 (defun %commit (henv hdbc)
   (with-error-handling
@@ -317,14 +328,12 @@ as possible second argument) to the desired representation of date/time/timestam
       #.$SQL_SPECIAL_CHARACTERS
       #.$SQL_TABLE_TERM
       #.$SQL_USER_NAME)
-     (let ((info-ptr (allocate-foreign-string 1024)))
+     (with-allocate-foreign-string (info-ptr 1024)
        (with-foreign-object (info-length-ptr :short)
-         (with-error-handling
-             (:hdbc hdbc)
-             (SQLGetInfo hdbc info-type info-ptr 1023 info-length-ptr)
-           (let ((info (convert-from-foreign-string info-ptr)))
-             (free-foreign-object info-ptr)
-             info)))))
+        (with-error-handling
+            (:hdbc hdbc)
+            (SQLGetInfo hdbc info-type info-ptr 1023 info-length-ptr)
+          (convert-from-foreign-string info-ptr)))))
     ;; those returning a word
     ((#.$SQL_ACTIVE_CONNECTIONS
       #.$SQL_ACTIVE_STATEMENTS
@@ -470,27 +479,25 @@ as possible second argument) to the desired representation of date/time/timestam
 
 ;; column counting is 1-based
 (defun %describe-column (hstmt column-nr)
-  (let ((column-name-ptr (allocate-foreign-string 256)))
+  (with-allocate-foreign-string (column-name-ptr 256)
     (with-foreign-objects ((column-name-length-ptr :short)
                            (column-sql-type-ptr :short)
                            (column-precision-ptr #.$ODBC-ULONG-TYPE)
                            (column-scale-ptr :short)
                            (column-nullable-p-ptr :short))
-      (with-error-handling (:hstmt hstmt)
-          (SQLDescribeCol hstmt column-nr column-name-ptr 256
-                          column-name-length-ptr
-                          column-sql-type-ptr
-                          column-precision-ptr
-                          column-scale-ptr
-                          column-nullable-p-ptr)
-        (let ((column-name (convert-from-foreign-string column-name-ptr)))
-          (free-foreign-object column-name-ptr)
-          (values
-           column-name
-           (deref-pointer column-sql-type-ptr :short)
-           (deref-pointer column-precision-ptr #.$ODBC-ULONG-TYPE)
-           (deref-pointer column-scale-ptr :short)
-           (deref-pointer column-nullable-p-ptr :short)))))))
+     (with-error-handling (:hstmt hstmt)
+         (SQLDescribeCol hstmt column-nr column-name-ptr 256
+                         column-name-length-ptr
+                         column-sql-type-ptr
+                         column-precision-ptr
+                         column-scale-ptr
+                         column-nullable-p-ptr)
+       (values
+        (convert-from-foreign-string column-name-ptr)
+        (deref-pointer column-sql-type-ptr :short)
+        (deref-pointer column-precision-ptr #.$ODBC-ULONG-TYPE)
+        (deref-pointer column-scale-ptr :short)
+        (deref-pointer column-nullable-p-ptr :short))))))
 
 ;; parameter counting is 1-based
 ;; this function isn't used, which is good because FreeTDS dosn't support it.
@@ -513,19 +520,17 @@ as possible second argument) to the desired representation of date/time/timestam
        (deref-pointer column-nullable-p-ptr :short)))))
 
 (defun %column-attributes (hstmt column-nr descriptor-type)
-  (let ((descriptor-info-ptr (allocate-foreign-string 256)))
+  (with-allocate-foreign-string (descriptor-info-ptr 256)
     (with-foreign-objects ((descriptor-length-ptr :short)
                            (numeric-descriptor-ptr #.$ODBC-LONG-TYPE))
-      (with-error-handling
-          (:hstmt hstmt)
-          (SQLColAttributes hstmt column-nr descriptor-type descriptor-info-ptr
-                            256 descriptor-length-ptr
-                            numeric-descriptor-ptr)
-        (let ((desc (convert-from-foreign-string descriptor-info-ptr)))
-          (free-foreign-object descriptor-info-ptr)
-          (values
-           desc
-           (deref-pointer numeric-descriptor-ptr #.$ODBC-LONG-TYPE)))))))
+     (with-error-handling
+         (:hstmt hstmt)
+         (SQLColAttributes hstmt column-nr descriptor-type descriptor-info-ptr
+                           256 descriptor-length-ptr
+                           numeric-descriptor-ptr)
+       (values
+        (convert-from-foreign-string descriptor-info-ptr)
+        (deref-pointer numeric-descriptor-ptr #.$ODBC-LONG-TYPE))))))
 
 (defun %prepare-describe-columns (hstmt table-qualifier table-owner
                                    table-name column-name)
@@ -549,35 +554,26 @@ as possible second argument) to the desired representation of date/time/timestam
     (fetch-all-rows hstmt)))
 
 (defun %sql-data-sources (henv &key (direction :first))
-  (let ((name-ptr (allocate-foreign-string (1+ $SQL_MAX_DSN_LENGTH)))
-        (description-ptr (allocate-foreign-string 1024)))
-    (with-foreign-objects ((name-length-ptr :short)
-                           (description-length-ptr :short))
-      (let ((res (with-error-handling
-                     (:henv henv)
-                     (SQLDataSources henv
-                                     (ecase direction
-                                       (:first $SQL_FETCH_FIRST)
-                                       (:next $SQL_FETCH_NEXT))
-                                     name-ptr
-                                     (1+ $SQL_MAX_DSN_LENGTH)
-                                     name-length-ptr
-                                     description-ptr
-                                     1024
-                                     description-length-ptr))))
-        (cond
-          ((= res $SQL_NO_DATA_FOUND)
-           (let ((name (convert-from-foreign-string name-ptr))
-                 (desc (convert-from-foreign-string description-ptr)))
-             (free-foreign-object name-ptr)
-             (free-foreign-object description-ptr)
-             (values
-              name
-              desc)))
-          (t
-           (free-foreign-object name-ptr)
-           (free-foreign-object description-ptr)
-           nil))))))
+  (with-allocate-foreign-strings ((name-ptr (1+ $SQL_MAX_DSN_LENGTH))
+                                  (description-ptr 1024))
+   (with-foreign-objects ((name-length-ptr :short)
+                          (description-length-ptr :short))
+    (let ((res (with-error-handling
+                   (:henv henv)
+                   (SQLDataSources henv
+                                   (ecase direction
+                                     (:first $SQL_FETCH_FIRST)
+                                     (:next $SQL_FETCH_NEXT))
+                                   name-ptr
+                                   (1+ $SQL_MAX_DSN_LENGTH)
+                                   name-length-ptr
+                                   description-ptr
+                                   1024
+                                   description-length-ptr))))
+      (when (= res $SQL_NO_DATA_FOUND)
+        (values
+          (convert-from-foreign-string name-ptr)
+          (convert-from-foreign-string description-ptr)))))))
 
 
 
@@ -951,6 +947,7 @@ as possible second argument) to the desired representation of date/time/timestam
    (get-slot-value ptr 'sql-c-timestamp 'fraction)))
 
 (defun universal-time-to-timestamp (time &optional (fraction 0))
+  "TODO: Dead function?"
   (multiple-value-bind (sec min hour day month year)
       (decode-universal-time time)
     (let ((ptr (allocate-foreign-object 'sql-c-timestamp)))
@@ -964,6 +961,7 @@ as possible second argument) to the desired representation of date/time/timestam
       ptr)))
 
 (defun %put-timestamp (ptr time &optional (fraction 0))
+  "TODO: Dead function?"
   (declare (type c-timestamp-ptr-type ptr))
   (multiple-value-bind (sec min hour day month year)
       (decode-universal-time time)
@@ -997,6 +995,9 @@ as possible second argument) to the desired representation of date/time/timestam
 
 (defun %set-attr-odbc-version (henv version)
   (with-error-handling (:henv henv)
+      ;;note that we are passing version as an integer that happens to be
+      ;;stuffed into a pointer.
+      ;;http://msdn.microsoft.com/en-us/library/ms709285%28v=VS.85%29.aspx
       (SQLSetEnvAttr henv $SQL_ATTR_ODBC_VERSION
                      (make-pointer version :void) 0)))
 
@@ -1016,34 +1017,28 @@ as possible second argument) to the desired representation of date/time/timestam
        (if ensure $SQL_ENSURE $SQL_QUICK)))))
 
 (defun %list-data-sources (henv)
-  (let ((dsn (allocate-foreign-string (1+ $SQL_MAX_DSN_LENGTH)))
-        (desc (allocate-foreign-string 256))
-        (results nil))
-    (unwind-protect
-         (with-foreign-objects ((dsn-len :short)
-                                (desc-len :short))
-           (let ((res (with-error-handling (:henv henv)
-                        (SQLDataSources henv $SQL_FETCH_FIRST dsn
-                                        (1+ $SQL_MAX_DSN_LENGTH)
-                                        dsn-len desc 256 desc-len))))
-             (when (or (eql res $SQL_SUCCESS)
-                       (eql res $SQL_SUCCESS_WITH_INFO))
-               (push (convert-from-foreign-string dsn) results))
+  (let ((results nil))
+    (with-foreign-strings ((dsn-ptr (1+ $SQL_MAX_DSN_LENGTH))
+                           (desc-ptr 256))
+      (with-foreign-objects ((dsn-len :short)
+                             (desc-len :short))
+       (let ((res (with-error-handling (:henv henv)
+                      (SQLDataSources henv $SQL_FETCH_FIRST dsn-ptr
+                                      (1+ $SQL_MAX_DSN_LENGTH)
+                                      dsn-len desc-ptr 256 desc-len))))
+         (when (or (eql res $SQL_SUCCESS)
+                   (eql res $SQL_SUCCESS_WITH_INFO))
+           (push (convert-from-foreign-string dsn-ptr) results))
 
-             (do ((res (with-error-handling (:henv henv)
-                         (SQLDataSources henv $SQL_FETCH_NEXT dsn
-                                         (1+ $SQL_MAX_DSN_LENGTH)
-                                         dsn-len desc 256 desc-len))
-                       (with-error-handling (:henv henv)
-                         (SQLDataSources henv $SQL_FETCH_NEXT dsn
-                                         (1+ $SQL_MAX_DSN_LENGTH)
-                                         dsn-len desc 256 desc-len))))
-                 ((not (or (eql res $SQL_SUCCESS)
-                           (eql res $SQL_SUCCESS_WITH_INFO))))
-               (push (convert-from-foreign-string dsn) results))))
-      (progn
-        (free-foreign-object dsn)
-        (free-foreign-object desc)))
+         (do ((res (with-error-handling (:henv henv)
+                       (SQLDataSources henv $SQL_FETCH_NEXT dsn-ptr
+                                       (1+ $SQL_MAX_DSN_LENGTH)
+                                       dsn-len desc-ptr 256 desc-len))
+                   (with-error-handling (:henv henv)
+                       (SQLDataSources henv $SQL_FETCH_NEXT dsn-ptr
+                                       (1+ $SQL_MAX_DSN_LENGTH)
+                                       dsn-len desc-ptr 256 desc-len))))
+             ((not (or (eql res $SQL_SUCCESS)
+                       (eql res $SQL_SUCCESS_WITH_INFO))))
+           (push (convert-from-foreign-string dsn-ptr) results)))))
     (nreverse results)))
-
-

@@ -65,6 +65,8 @@
                                       parameter-columns))
 (defgeneric get-odbc-info (src info-type))
 
+(defvar *reuse-query-objects* t)
+
 
 ;;; SQL Interface
 
@@ -145,13 +147,11 @@ the query against." ))
     db))
 
 (defun disconnect (database)
+  "This is set in the generic-odbc-database disconnect-fn slot so xref fails
+   but this does get called on generic ODBC connections "
   (with-slots (hdbc queries) database
     (dolist (query queries)
-      (if (query-active-p query)
-          (with-slots (hstmt) query
-            (when hstmt
-              (%free-statement hstmt :drop)
-              (setf hstmt nil)))))
+      (db-close-query query :drop-p T))
     (when (db-hstmt database)
       (%free-statement (db-hstmt database) :drop))
     (%disconnect hdbc)))
@@ -269,20 +269,22 @@ the query against." ))
         (setf active-p t)))))
 
 ;; one for odbc-db is missing
+;; TODO: Seems to be uncalled
 (defmethod terminate ((query odbc-query))
   ;;(format tb::*local-output* "~%*** terminated: ~s" query)
-  (with-slots (hstmt) query
-    (when hstmt
-      ;(%free-statement hstmt :drop)
-      (uffi:free-foreign-object hstmt)) ;; ??
-    (%dispose-column-ptrs query)))
+  (db-close-query query))
 
 (defun %dispose-column-ptrs (query)
+  "frees memory allocated for query object column-data and column-data-length"
   (with-slots (column-data-ptrs column-out-len-ptrs hstmt) query
     (loop for data-ptr across column-data-ptrs
-          when data-ptr do (uffi:free-foreign-object data-ptr))
-    (loop for out-len-ptr across column-out-len-ptrs
-          when out-len-ptr do (uffi:free-foreign-object out-len-ptr))))
+          for out-len-ptr across column-out-len-ptrs
+          when data-ptr
+            do (uffi:free-foreign-object data-ptr)
+          when out-len-ptr
+            do (uffi:free-foreign-object out-len-ptr))
+    (setf (fill-pointer column-data-ptrs) 0
+          (fill-pointer column-out-len-ptrs) 0)))
 
 (defmethod db-open-query ((database odbc-db) query-expression
                           &key arglen col-positions result-types width
@@ -365,32 +367,31 @@ the query against." ))
   "get-free-query finds or makes a nonactive query object, and then sets it to active.
 This makes the functions db-execute-command and db-query thread safe."
   (with-slots (queries hdbc) database
-    (or (clsql-sys:without-interrupts
-         (let ((inactive-query (find-if (lambda (query)
-                                          (not (query-active-p query)))
-                                        queries)))
-           (when inactive-query
-             (with-slots (column-count column-names column-c-types
-                          width hstmt
-                          column-sql-types column-data-ptrs
-                          column-out-len-ptrs column-precisions
-                          column-scales column-nullables-p)
-                         inactive-query
-               ;;(print column-data-ptrs tb::*local-output*)
-               ;;(%dispose-column-ptrs inactive-query)
-               (setf column-count 0
-                     width +max-precision+
-                     ;; KMR hstmt (%new-statement-handle hdbc)
-                     (fill-pointer column-names) 0
-                     (fill-pointer column-c-types) 0
-                     (fill-pointer column-sql-types) 0
-                     (fill-pointer column-data-ptrs) 0
-                     (fill-pointer column-out-len-ptrs) 0
-                     (fill-pointer column-precisions) 0
-                     (fill-pointer column-scales) 0
-                     (fill-pointer column-nullables-p) 0))
-             (setf (query-active-p inactive-query) t))
-           inactive-query))
+    (or (and *reuse-query-objects*
+             (clsql-sys:without-interrupts
+               (let ((inactive-query (find-if (lambda (query)
+                                                (not (query-active-p query)))
+                                              queries)))
+                 (when inactive-query
+                   (with-slots (column-count column-names column-c-types
+                                width hstmt
+                                column-sql-types column-data-ptrs
+                                column-out-len-ptrs column-precisions
+                                column-scales column-nullables-p)
+                       inactive-query
+                     (setf column-count 0
+                           width +max-precision+
+                           ;; KMR hstmt (%new-statement-handle hdbc)
+                           (fill-pointer column-names) 0
+                           (fill-pointer column-c-types) 0
+                           (fill-pointer column-sql-types) 0
+                           (fill-pointer column-data-ptrs) 0
+                           (fill-pointer column-out-len-ptrs) 0
+                           (fill-pointer column-precisions) 0
+                           (fill-pointer column-scales) 0
+                           (fill-pointer column-nullables-p) 0))
+                   (setf (query-active-p inactive-query) t))
+                 inactive-query)))
         (let ((new-query (make-instance 'odbc-query
                                         :database database
                                         ;;(clone-database database)
@@ -468,29 +469,26 @@ This makes the functions db-execute-command and db-query thread safe."
               (t t)))))
   query)
 
-(defun db-close-query (query &key drop-p)
+(defun db-close-query (query &key (drop-p (not *reuse-query-objects*)))
   (with-slots (hstmt column-count column-names column-c-types column-sql-types
-                     column-data-ptrs column-out-len-ptrs column-precisions
-                     column-scales column-nullables-p) query
-    (let ((count (fill-pointer column-data-ptrs)))
-      (when (not (zerop count))
-        (dotimes (col-nr count)
-          (let ((data-ptr (aref column-data-ptrs col-nr))
-                (out-len-ptr (aref column-out-len-ptrs col-nr)))
-            (declare (ignorable data-ptr out-len-ptr))
-            ;; free-statment :unbind frees these
-            #+ignore (when data-ptr (uffi:free-foreign-object data-ptr))
-            #+ignore (when out-len-ptr (uffi:free-foreign-object out-len-ptr)))))
-      (cond ((null hstmt)
-             nil)
-            (drop-p
-             (%free-statement hstmt :drop)
-             (setf hstmt nil))
-            (t
-             (%free-statement hstmt :unbind)
-             (%free-statement hstmt :reset)
-             (%free-statement hstmt :close)))
-      (setf (query-active-p query) nil)))
+               column-data-ptrs column-out-len-ptrs column-precisions
+               column-scales column-nullables-p database) query
+    (%dispose-column-ptrs query)
+    (cond ((null hstmt) nil)
+          (drop-p
+           (%free-statement hstmt :drop)
+           ;; dont free with uffi/ this is a double free and crashes everything
+           ;; (uffi:free-foreign-object hstmt)
+           (setf hstmt nil))
+          (t
+           (%free-statement hstmt :unbind)
+           (%free-statement hstmt :reset)
+           (%free-statement hstmt :close)))
+    (setf (query-active-p query) nil)
+    (when drop-p
+      (clsql-sys:without-interrupts
+        (with-slots (queries) database
+          (setf queries (remove query queries))))))
   query)
 
 (defmethod %read-query-data ((database odbc-db) ignore-columns)
@@ -584,7 +582,8 @@ This makes the functions db-execute-command and db-query thread safe."
     (let ((query (get-free-query database)))
       (with-slots (hstmt) query
         (unless hstmt (setf hstmt (%new-statement-handle hdbc))))
-      (db-prepare-statement query sql parameter-table parameter-columns))))
+      (db-prepare-statement
+       query sql :parameter-table parameter-table :parameter-columns parameter-columns))))
 
 (defmethod db-prepare-statement ((query odbc-query) (sql string)
                                      &key parameter-table parameter-columns)
@@ -607,15 +606,18 @@ This makes the functions db-execute-command and db-query thread safe."
 
 
 (defun %db-bind-execute (query &rest parameters)
+  "Only used from db-map-bind-query
+    parameters are released in %reset-query
+  "
   (with-slots (hstmt parameter-data-ptrs) query
     (loop for parameter in parameters
           with data-ptr and size and parameter-string
           do
           (setf parameter-string
                 (if (stringp parameter)
-                  parameter
-                  (write-to-string parameter))
-           size (length parameter-string)
+                    parameter
+                    (write-to-string parameter))
+                size (length parameter-string)
                 data-ptr
                 (uffi:allocate-foreign-string (1+ size)))
           (vector-push-extend data-ptr parameter-data-ptrs)
@@ -637,9 +639,12 @@ This makes the functions db-execute-command and db-query thread safe."
 
 
 (defun %db-reset-query (query)
+  "Only used from db-map-bind-query
+    parameters are allocated in %db-bind-execute
+  "
   (with-slots (hstmt parameter-data-ptrs) query
     (prog1
-      (db-fetch-query-results query nil)
+        (db-fetch-query-results query nil)
       (%free-statement hstmt :reset) ;; but _not_ :unbind !
       (%free-statement hstmt :close)
       (dotimes (param-nr (fill-pointer parameter-data-ptrs))
