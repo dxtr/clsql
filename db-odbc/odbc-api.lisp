@@ -702,8 +702,7 @@ as possible second argument) to the desired representation of date/time/timestam
                        (get-cast-binary data-ptr out-len *binary-format*))
                       ((#.$SQL_C_SSHORT #.$SQL_C_STINYINT) ; LMH short ints
                        (get-cast-short data-ptr)) ; LMH
-                      (#.$SQL_C_SBIGINT (uffi:allocate-foreign-object #.$ODBC-BIG-TYPE)
-                       (get-cast-short data-ptr))
+                      (#.$SQL_C_SBIGINT (get-cast-big data-ptr))
                       #+ignore
                       (#.$SQL_C_CHAR
                        (code-char (get-cast-short data-ptr)))
