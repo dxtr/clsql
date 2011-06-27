@@ -17,9 +17,9 @@
 (in-package #:clsql-sys)
 
 (defparameter *db-pool-max-free-connections* 4
-  "Threshold of free-connections in the pool before we disconnect a
-  database rather than returning it to the pool. This is really a heuristic
-that should, on avg keep the free connections about this size.")
+  "Threshold of free-connections in the pool before we disconnect a database
+  rather than returning it to the pool.  NIL for no limit.  This is really a
+  heuristic that should, on avg keep the free connections about this size.")
 
 (defvar *db-pool* (make-hash-table :test #'equal))
 (defvar *db-pool-lock* (make-process-lock "DB Pool lock"))
@@ -31,6 +31,8 @@ that should, on avg keep the free connections about this size.")
    (all-connections :accessor all-connections :initform nil)
    (lock :accessor conn-pool-lock
 	 :initform (make-process-lock "Connection pool"))))
+
+
 
 
 (defun acquire-from-pool (connection-spec database-type &optional pool encoding)
@@ -75,29 +77,29 @@ Disconnecting.~%"
        (setf (conn-pool conn) pool))
      conn)))
 
-(defun release-to-pool (database)
+(defun release-to-pool (database &optional (pool (conn-pool database)))
   "Release a database connection to the pool. The backend will have a
 chance to do cleanup."
-  (let ((pool (conn-pool database)))
-    (cond
-      ;;We read the list of free-connections outside the lock. This
-      ;;should be fine as long as that list is never dealt with
-      ;;destructively (push and pop destructively modify the place,
-      ;;not the list). Multiple threads getting to this test at the
-      ;;same time might result in the free-connections getting
-      ;;longer... meh.
-      ((and *db-pool-max-free-connections*
-	    (>= (length (free-connections pool))
-		*db-pool-max-free-connections*))
-       (%pool-force-disconnect database)
-       (with-process-lock ((conn-pool-lock pool) "Remove extra Conn")
-	 (setf (all-connections pool)
-	       (delete database (all-connections pool)))))
-      (t
-       ;;let it do cleanup
-       (database-release-to-conn-pool database)
-       (with-process-lock ((conn-pool-lock pool) "Release to pool")
-	 (push database (free-connections pool)))))))
+  (unless (conn-pool database) (setf (conn-pool database) pool))
+  (cond
+    ;;We read the list of free-connections outside the lock. This
+    ;;should be fine as long as that list is never dealt with
+    ;;destructively (push and pop destructively modify the place,
+    ;;not the list). Multiple threads getting to this test at the
+    ;;same time might result in the free-connections getting
+    ;;longer... meh.
+    ((or (and *db-pool-max-free-connections*
+              (>= (length (free-connections pool))
+                  *db-pool-max-free-connections*)))
+     (%pool-force-disconnect database)
+     (with-process-lock ((conn-pool-lock pool) "Remove extra Conn")
+       (setf (all-connections pool)
+             (delete database (all-connections pool)))))
+    (t
+     ;;let it do cleanup
+     (database-release-to-conn-pool database)
+     (with-process-lock ((conn-pool-lock pool) "Release to pool")
+       (push database (free-connections pool))))))
 
 (defmethod database-acquire-from-conn-pool (database)
   (case (database-underlying-type database)
