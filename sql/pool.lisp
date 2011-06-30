@@ -72,9 +72,9 @@ Disconnecting.~%"
 			:if-exists :new
 			:make-default nil
                         :encoding encoding)))
+     (setf (conn-pool conn) pool)
      (with-process-lock ((conn-pool-lock pool) "new conection")
-       (push conn (all-connections pool))
-       (setf (conn-pool conn) pool))
+       (push conn (all-connections pool)))
      conn)))
 
 (defun release-to-pool (database &optional (pool (conn-pool database)))
@@ -92,6 +92,7 @@ chance to do cleanup."
               (>= (length (free-connections pool))
                   *db-pool-max-free-connections*)))
      (%pool-force-disconnect database)
+
      (with-process-lock ((conn-pool-lock pool) "Remove extra Conn")
        (setf (all-connections pool)
              (delete database (all-connections pool)))))
@@ -135,15 +136,13 @@ to whether another thread is actively using them."
 (defun find-or-create-connection-pool (connection-spec database-type)
   "Find connection pool in hash table, creates a new connection pool
 if not found"
-  (with-process-lock (*db-pool-lock* "Find-or-create connection")
-    (let* ((key (list connection-spec database-type))
-	   (conn-pool (gethash key *db-pool*)))
-      (unless conn-pool
-	(setq conn-pool (make-instance 'conn-pool
-				       :connection-spec connection-spec
-				       :pool-database-type database-type))
-	(setf (gethash key *db-pool*) conn-pool))
-      conn-pool)))
+  (let ((key (list connection-spec database-type)))
+    (with-process-lock (*db-pool-lock* "Find-or-create connection")
+      (or (gethash key *db-pool*)
+          (setf (gethash key *db-pool*)
+                (make-instance 'conn-pool
+                               :connection-spec connection-spec
+                               :pool-database-type database-type))))))
 
 (defun disconnect-pooled (&optional clear)
   "Disconnects all connections in the pool. When clear, also deletes
