@@ -43,6 +43,7 @@
 (defun float-to-sql-string (num)
   "Convert exponent character for SQL"
   (let ((str (write-to-string num :readably t)))
+    (declare (type string str))
     (cond
      ((find #\f str)
       (substitute #\e #\f str))
@@ -125,6 +126,7 @@
 
 (defun substitute-string-for-char (procstr match-char subst-str)
 "Substitutes a string for a single matching character of a string"
+  (declare (type string procstr))
   (let ((pos (position match-char procstr)))
     (if pos
         (concatenate 'string
@@ -166,6 +168,7 @@
     (setq pos (1+ end))))
 
 (defun string-to-list-connection-spec (str)
+  (declare (type string str))
   (let ((at-pos (position-char #\@ str 0 (length str))))
     (cond
       ((and at-pos (> (length str) at-pos))
