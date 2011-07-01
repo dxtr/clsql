@@ -38,5 +38,34 @@
         (clsql-sys::prepared-sql-to-postgresql-sql "SELECT 'FOO' FROM BAR WHERE ID='Match?''?' AND CODE=?")
       "SELECT 'FOO' FROM BAR WHERE ID='Match?''?' AND CODE=$1")
 
+    (deftest :int/output-caching/1
+     #.(locally-enable-sql-reader-syntax)
+     ;; ensure that key generation and matching is working
+     ;; so that this table doesnt balloon (more than designed)
+     (list
+      (progn (clsql:sql [foo])
+             (clsql:sql [foo])
+             (hash-table-count clsql-sys::*output-hash*))
+
+      (progn (clsql:sql [foo.bar])
+             (clsql:sql [foo bar])
+             (hash-table-count clsql-sys::*output-hash*))
+      (progn (clsql:sql (clsql-sys:sql-expression
+                         :table (clsql-sys::database-identifier 'foo)
+                         :attribute (clsql-sys::database-identifier 'bar)))
+             (clsql:sql (clsql-sys:sql-expression
+                         :table (clsql-sys::database-identifier 'foo)
+                         :attribute (clsql-sys::database-identifier 'bar)))
+             (hash-table-count clsql-sys::*output-hash*)))
+     (1 2 2))
+
+    (deftest :int/output-caching/2
+     #.(locally-enable-sql-reader-syntax)
+     ;; ensure that we can disable the output cache and
+     ;; still have everything work
+     (let ((clsql-sys::*output-hash*))
+       (list (clsql:sql [foo]) (clsql:sql [foo]) (clsql:sql [foo.bar])))
+     ("FOO" "FOO" "FOO.BAR"))
+
     ))
 

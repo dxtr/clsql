@@ -72,12 +72,12 @@
 
 (defun default-suites ()
   "The default list of tests to run."
-  (append *rt-internal* *rt-connection* *rt-basic* *rt-fddl* *rt-fdml*
+  (append *rt-connection* *rt-basic* *rt-fddl* *rt-fdml*
 	  *rt-ooddl* *rt-oodml* *rt-syntax* *rt-time* *rt-i18n*))
 
 (defun internal-suites ()
   "The default internal suites that should run without any specific backend"
-  (append *rt-pool*))
+  (append *rt-internal* *rt-pool*))
 
 
 (defvar *error-count* 0)
