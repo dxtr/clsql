@@ -320,7 +320,7 @@
 			      :oodml/update-records/6 :oodml/update-records/7
 			      :oodml/update-records/8 :oodml/update-records/9
 			      :oodml/update-records/9-slots :oodml/update-records/10
-			      :oodml/update-records/11 :oodml/update-instance/3
+			      :oodml/update-records/11 :OODML/UPDATE-RECORDS/12 :oodml/update-instance/3
 			      :oodml/update-instance/4 :oodml/update-instance/5
 			      :oodml/update-instance/6 :oodml/update-instance/7
 			      :oodml/db-auto-sync/3 :oodml/db-auto-sync/4))
