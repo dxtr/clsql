@@ -394,3 +394,14 @@ is replaced with replacement. [FROM http://cl-cookbook.sourceforge.net/strings.h
 	    while pos)
     (unless stream
       (get-output-stream-string out))))
+
+
+(defun filter-plist (plist &rest keys-to-remove)
+  "Returns a copy of the given plist with indicated key-value pairs
+removed. keys are searched with #'MEMBER"
+  (declare (dynamic-extent keys-to-remove))
+  (when plist
+    (loop for (k v . rest) = plist then rest
+          unless (member k keys-to-remove)
+            collect k and collect v
+          while rest)))
