@@ -1344,11 +1344,8 @@ as elements of a list."
 (defun (setf records-cache-results) (results targets qualifiers database)
   (unless (record-caches database)
     (setf (record-caches database)
-          (make-hash-table :test 'equal
-                           #+allegro   :values    #+allegro :weak
-                           #+clisp     :weak      #+clisp :value
-                           #+lispworks :weak-kind #+lispworks :value)))
-  (setf (gethash (compute-records-cache-key targets qualifiers)
+          (make-weak-hash-table :test 'equal)))
+  (setf (gethash (compute-records-cache-key (copy-list targets) qualifiers)
                  (record-caches database)) results)
   results)
 

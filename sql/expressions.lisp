@@ -139,11 +139,9 @@
 
 
 (defvar *output-hash*
-  #+sbcl
-  (make-hash-table :test #'equal :synchronized T :weakness :key-and-value)
-  #-sbcl
-  (make-hash-table :test #'equal )
-  "For caching generated SQL strings.")
+      (make-weak-hash-table :test #'equal)
+  "For caching generated SQL strings, set to NIL to disable."
+  )
 
 (defmethod output-sql :around ((sql t) database)
   (if (null *output-hash*)
