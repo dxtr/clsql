@@ -125,15 +125,17 @@
   (substitute-string-for-char s #\' "''"))
 
 (defun substitute-string-for-char (procstr match-char subst-str)
-"Substitutes a string for a single matching character of a string"
-  (declare (type string procstr))
-  (let ((pos (position match-char procstr)))
-    (if pos
-        (concatenate 'string
-          (subseq procstr 0 pos) subst-str
-          (substitute-string-for-char
-           (subseq procstr (1+ pos)) match-char subst-str))
-      procstr)))
+  "Substitutes a string for a single matching character of a string"
+  (when procstr
+    (locally
+        (declare (type string procstr))
+      (let ((pos (position match-char procstr)))
+        (if pos
+            (concatenate 'string
+                         (subseq procstr 0 pos) subst-str
+                         (substitute-string-for-char
+                          (subseq procstr (1+ pos)) match-char subst-str))
+            procstr)))))
 
 
 (defun position-char (char string start max)
