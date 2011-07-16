@@ -1,3 +1,6 @@
+2011-07-16  Kevin Rosenberg <kevin@rosenberg.net>
+	* Version 5.4.0 release
+
 2011-06-27  Nathan Bird  <nathan@acceleration.net>
 	* db-odbc/: memory management improvements: leak slower
 	* MSSQL: TOP + DISTINCT work together
