@@ -203,7 +203,11 @@
 
 (defmethod query ((obj command-object) &key (database *default-database*)
                   (result-types :auto) (flatp nil) (field-names t))
-  (clsql-sys::record-sql-command (expression obj) database)
+  (clsql-sys::record-sql-command
+   (format nil "~&~A~&{Params: ~{~A~^, ~}}"
+           (expression obj)
+           (parameters obj))
+   database)
   (multiple-value-bind (rows names)
       (database-query obj database result-types field-names)
     (let ((result (if (and flatp (= 1 (length (car rows))))
