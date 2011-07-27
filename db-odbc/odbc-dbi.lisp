@@ -328,7 +328,7 @@ the query against." ))
                             (cond ((< 0 precision (query-width query))
                                    (read-data data-ptr c-type sql-type out-len-ptr result-type))
                                   ((zerop (get-cast-long out-len-ptr))
-                              nil)
+                                   nil)
                                   (t
                                    (read-data-in-chunks hstmt j data-ptr c-type sql-type
                                                         out-len-ptr result-type))))))))
@@ -450,6 +450,7 @@ This makes the functions db-execute-command and db-query thread safe."
           ;; get column information
           (initialize-column col-nr))))
 
+    ;; TODO: move this into the above loop
     (setf computed-result-types (make-array column-count))
     (dotimes (i column-count)
       (setf (aref computed-result-types i)
@@ -465,6 +466,11 @@ This makes the functions db-execute-command and db-query thread safe."
                  (#.odbc::$SQL_C_STINYINT :short)
                  (#.odbc::$SQL_C_SBIGINT #.odbc::$ODBC-BIG-TYPE)
                  (#.odbc::$SQL_C_TYPE_TIMESTAMP :time)
+                 (#.odbc::$SQL_C_CHAR ;; TODO: Read this as rational instead of double
+                   (or (case (aref column-sql-types i)
+                         (#.odbc::$SQL_NUMERIC :double))
+                       T))
+
                  (t t)))
               (t t)))))
   query)

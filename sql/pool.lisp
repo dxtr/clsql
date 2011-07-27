@@ -17,9 +17,9 @@
 (in-package #:clsql-sys)
 
 (defparameter *db-pool-max-free-connections* 4
-  "Threshold of free-connections in the pool before we disconnect a
-  database rather than returning it to the pool. This is really a heuristic
-that should, on avg keep the free connections about this size.")
+  "Threshold of free-connections in the pool before we disconnect a database
+  rather than returning it to the pool.  NIL for no limit.  This is really a
+  heuristic that should, on avg keep the free connections about this size.")
 
 (defvar *db-pool* (make-hash-table :test #'equal))
 (defvar *db-pool-lock* (make-process-lock "DB Pool lock"))
@@ -31,6 +31,8 @@ that should, on avg keep the free connections about this size.")
    (all-connections :accessor all-connections :initform nil)
    (lock :accessor conn-pool-lock
 	 :initform (make-process-lock "Connection pool"))))
+
+
 
 
 (defun acquire-from-pool (connection-spec database-type &optional pool encoding)
@@ -70,34 +72,35 @@ Disconnecting.~%"
 			:if-exists :new
 			:make-default nil
                         :encoding encoding)))
+     (setf (conn-pool conn) pool)
      (with-process-lock ((conn-pool-lock pool) "new conection")
-       (push conn (all-connections pool))
-       (setf (conn-pool conn) pool))
+       (push conn (all-connections pool)))
      conn)))
 
-(defun release-to-pool (database)
+(defun release-to-pool (database &optional (pool (conn-pool database)))
   "Release a database connection to the pool. The backend will have a
 chance to do cleanup."
-  (let ((pool (conn-pool database)))
-    (cond
-      ;;We read the list of free-connections outside the lock. This
-      ;;should be fine as long as that list is never dealt with
-      ;;destructively (push and pop destructively modify the place,
-      ;;not the list). Multiple threads getting to this test at the
-      ;;same time might result in the free-connections getting
-      ;;longer... meh.
-      ((and *db-pool-max-free-connections*
-	    (>= (length (free-connections pool))
-		*db-pool-max-free-connections*))
-       (%pool-force-disconnect database)
-       (with-process-lock ((conn-pool-lock pool) "Remove extra Conn")
-	 (setf (all-connections pool)
-	       (delete database (all-connections pool)))))
-      (t
-       ;;let it do cleanup
-       (database-release-to-conn-pool database)
-       (with-process-lock ((conn-pool-lock pool) "Release to pool")
-	 (push database (free-connections pool)))))))
+  (unless (conn-pool database) (setf (conn-pool database) pool))
+  (cond
+    ;;We read the list of free-connections outside the lock. This
+    ;;should be fine as long as that list is never dealt with
+    ;;destructively (push and pop destructively modify the place,
+    ;;not the list). Multiple threads getting to this test at the
+    ;;same time might result in the free-connections getting
+    ;;longer... meh.
+    ((or (and *db-pool-max-free-connections*
+              (>= (length (free-connections pool))
+                  *db-pool-max-free-connections*)))
+     (%pool-force-disconnect database)
+
+     (with-process-lock ((conn-pool-lock pool) "Remove extra Conn")
+       (setf (all-connections pool)
+             (delete database (all-connections pool)))))
+    (t
+     ;;let it do cleanup
+     (database-release-to-conn-pool database)
+     (with-process-lock ((conn-pool-lock pool) "Release to pool")
+       (push database (free-connections pool))))))
 
 (defmethod database-acquire-from-conn-pool (database)
   (case (database-underlying-type database)
@@ -133,15 +136,13 @@ to whether another thread is actively using them."
 (defun find-or-create-connection-pool (connection-spec database-type)
   "Find connection pool in hash table, creates a new connection pool
 if not found"
-  (with-process-lock (*db-pool-lock* "Find-or-create connection")
-    (let* ((key (list connection-spec database-type))
-	   (conn-pool (gethash key *db-pool*)))
-      (unless conn-pool
-	(setq conn-pool (make-instance 'conn-pool
-				       :connection-spec connection-spec
-				       :pool-database-type database-type))
-	(setf (gethash key *db-pool*) conn-pool))
-      conn-pool)))
+  (let ((key (list connection-spec database-type)))
+    (with-process-lock (*db-pool-lock* "Find-or-create connection")
+      (or (gethash key *db-pool*)
+          (setf (gethash key *db-pool*)
+                (make-instance 'conn-pool
+                               :connection-spec connection-spec
+                               :pool-database-type database-type))))))
 
 (defun disconnect-pooled (&optional clear)
   "Disconnects all connections in the pool. When clear, also deletes

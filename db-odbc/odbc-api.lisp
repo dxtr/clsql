@@ -56,8 +56,15 @@ as possible second argument) to the desired representation of date/time/timestam
 (defun %cstring-into-vector (ptr vector offset size-in-bytes)
   (dotimes (i size-in-bytes)
     (setf (schar vector offset)
-      (ensure-char-character
-       (deref-array ptr '(:array :unsigned-char) i)))
+          (ensure-char-character
+              ;; this is MUCH faster than (sb-alien:deref ptr i) even though
+              ;; sb-alien:deref makes more sense. I snagged this by looking at
+              ;; cffi which we had used previously without this bug
+              #+(and sbcl (not cffi))
+              (sb-sys:sap-ref-8 (sb-alien:alien-sap ptr) i)
+              #-(and sbcl (not cffi))
+              (deref-array ptr '(:array :unsigned-char) i)
+       ))
     (incf offset))
   offset)
 
@@ -660,10 +667,9 @@ as possible second argument) to the desired representation of date/time/timestam
 
 (defun read-data (data-ptr c-type sql-type out-len-ptr result-type)
   (declare (type long-ptr-type out-len-ptr))
-  (let* ((out-len (deref-pointer out-len-ptr #.$ODBC-LONG-TYPE))
+  (let* ((out-len (get-cast-long out-len-ptr))
          (value
-          (cond ((= out-len $SQL_NULL_DATA)
-                 *null*)
+          (cond ((= out-len $SQL_NULL_DATA) *null*)
                 (t
                  (case sql-type
                    ;; SQL extended datatypes
@@ -673,9 +679,12 @@ as possible second argument) to the desired representation of date/time/timestam
                    (#.$SQL_SMALLINT (get-cast-short data-ptr)) ;; ??
                    (#.$SQL_INTEGER (get-cast-int data-ptr))
                    (#.$SQL_BIGINT (get-cast-big data-ptr))
-                   (#.$SQL_DECIMAL
-                    (let ((*read-base* 10))
-                      (read-from-string (get-cast-foreign-string data-ptr))))
+                   ;; TODO: Change this to read in rationals instead of doubles
+                   ((#.$SQL_DECIMAL #.$SQL_NUMERIC)
+                     (let* ((*read-base* 10)
+                            (*read-default-float-format* 'double-float)
+                            (str (get-cast-foreign-string data-ptr)))
+                       (read-from-string str)))
                    (#.$SQL_BIT (get-cast-byte data-ptr))
                    (t
                     (case c-type
@@ -874,13 +883,14 @@ as possible second argument) to the desired representation of date/time/timestam
 
 (defconstant $sql-data-truncated (intern "01004" :keyword))
 
+
 (defun read-data-in-chunks (hstmt column-nr data-ptr c-type sql-type
                                       out-len-ptr result-type)
   (declare (type long-ptr-type out-len-ptr)
            (ignore result-type))
   (let* ((res (%sql-get-data hstmt column-nr c-type data-ptr
                              +max-precision+ out-len-ptr))
-         (out-len (deref-pointer out-len-ptr #.$ODBC-LONG-TYPE))
+         (out-len (get-cast-long out-len-ptr))
          (offset 0)
          (result (case out-len
                    (#.$SQL_NULL_DATA
@@ -906,28 +916,31 @@ as possible second argument) to the desired representation of date/time/timestam
                                           (let ((*read-base* 10))
                                             (read-from-string str))
                                         str)))
-                    (otherwise
-                    (let ((str)
-                          (offset 0)
-                          (octets (make-array out-len :element-type '(unsigned-byte 8) :initial-element 0)))
+                   (otherwise
+                    (let ((str (make-string out-len)))
                       (loop
-                         do
-                             (loop for i from 0 to (1- (min out-len +max-precision+))
-                                do (setf (aref octets (+ offset i)) (deref-array data-ptr '(:array :unsigned-byte) i))
-                                finally (incf offset (1- i)))
-                         while
-                           (and (= res $SQL_SUCCESS_WITH_INFO)
-                                (> out-len +max-precision+))
-                         do
-                           (setf res (%sql-get-data hstmt column-nr c-type data-ptr +max-precision+ out-len-ptr)
-                                 out-len (deref-pointer out-len-ptr #.$ODBC-LONG-TYPE)))
-                      (setf str (uffi:octets-to-string octets))
+                        do
+                           (if (= c-type #.$SQL_CHAR)
+                               (setf offset (%cstring-into-vector ;string
+                                             data-ptr str
+                                             offset
+                                             (min out-len (1- +max-precision+))))
+                               (error 'clsql:sql-database-error :message "wrong type. preliminary."))
+                        while
+                        (and (= res $SQL_SUCCESS_WITH_INFO)
+                             (>= out-len +max-precision+))
+                        do (setf res  (%sql-get-data hstmt column-nr c-type data-ptr
+                                                     +max-precision+ out-len-ptr)
+                                 out-len (get-cast-long out-len-ptr)))
                       (if (= sql-type $SQL_DECIMAL)
-                          (let ((*read-base* 10))
+                          (let ((*read-base* 10)
+                                (*read-default-float-format* 'double-float))
                             (read-from-string str))
                           str))))))
+
     (setf (deref-pointer out-len-ptr #.$ODBC-LONG-TYPE) #.$SQL_NO_TOTAL) ;; reset the out length for the next row
     result))
+
 
 (def-type c-timestamp-ptr-type (* (:struct sql-c-timestamp)))
 (def-type c-time-ptr-type (* (:struct sql-c-time)))

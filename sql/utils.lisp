@@ -43,6 +43,7 @@
 (defun float-to-sql-string (num)
   "Convert exponent character for SQL"
   (let ((str (write-to-string num :readably t)))
+    (declare (type string str))
     (cond
      ((find #\f str)
       (substitute #\e #\f str))
@@ -124,14 +125,17 @@
   (substitute-string-for-char s #\' "''"))
 
 (defun substitute-string-for-char (procstr match-char subst-str)
-"Substitutes a string for a single matching character of a string"
-  (let ((pos (position match-char procstr)))
-    (if pos
-        (concatenate 'string
-          (subseq procstr 0 pos) subst-str
-          (substitute-string-for-char
-           (subseq procstr (1+ pos)) match-char subst-str))
-      procstr)))
+  "Substitutes a string for a single matching character of a string"
+  (when procstr
+    (locally
+        (declare (type string procstr))
+      (let ((pos (position match-char procstr)))
+        (if pos
+            (concatenate 'string
+                         (subseq procstr 0 pos) subst-str
+                         (substitute-string-for-char
+                          (subseq procstr (1+ pos)) match-char subst-str))
+            procstr)))))
 
 
 (defun position-char (char string start max)
@@ -166,6 +170,7 @@
     (setq pos (1+ end))))
 
 (defun string-to-list-connection-spec (str)
+  (declare (type string str))
   (let ((at-pos (position-char #\@ str 0 (length str))))
     (cond
       ((and at-pos (> (length str) at-pos))
@@ -375,3 +380,49 @@ list of characters and replacement strings."
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (setq cl:*features* (delete :clsql-lowercase-reader cl:*features*)))
 
+(defun replace-all (string part replacement &key (test #'char=) stream)
+  "Returns a new string in which all the occurences of the part 
+is replaced with replacement. [FROM http://cl-cookbook.sourceforge.net/strings.html#manip]"
+  (let ((out (or stream (make-string-output-stream))))
+    (loop with part-length = (length part)
+	  for old-pos = 0 then (+ pos part-length)
+	  for pos = (search part string
+			    :start2 old-pos
+			    :test test)
+	  do (write-string string out
+		   :start old-pos
+		   :end (or pos (length string)))
+	  when pos do (write-string replacement out)
+	    while pos)
+    (unless stream
+      (get-output-stream-string out))))
+
+
+(defun filter-plist (plist &rest keys-to-remove)
+  "Returns a copy of the given plist with indicated key-value pairs
+removed. keys are searched with #'MEMBER"
+  (declare (dynamic-extent keys-to-remove))
+  (when plist
+    (loop for (k v . rest) = plist then rest
+          unless (member k keys-to-remove)
+            collect k and collect v
+          while rest)))
+
+(defmacro make-weak-hash-table (&rest args)
+  "Creates a weak hash table for use in a cache."
+  `(progn
+
+    ;;NB: These are generally used for caches that may not have an alternate
+    ;;clearing mechanism. If you are on an implementation that doesn't support
+    ;;weak hash tables then you're memory may accumulate.
+
+    #-(or sbcl allegro clisp lispworks)
+    (warn "UNSAFE! use of weak hash on implementation without support. (see clsql/sql/utils.lisp to add)")
+
+    (make-hash-table
+      #+allegro   :values    #+allegro :weak
+      #+clisp     :weak      #+clisp :value
+      #+lispworks :weak-kind #+lispworks :value
+      #+sbcl :weakness #+sbcl :value
+      ,@args)
+    ))

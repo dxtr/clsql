@@ -16,13 +16,19 @@
 
 (in-package #:clsql-tests)
 
+(defun %get-int (v)
+  (etypecase v
+    (string (parse-integer v :junk-allowed t))
+    (integer v)
+    (number (truncate v))))
+
 (defvar *config-pathname*
   (make-pathname :defaults (user-homedir-pathname)
                  :name ".clsql-test"
                  :type "config"))
 
 (defvar +all-db-types+
-  '(:postgresql :postgresql-socket :mysql :sqlite :sqlite3 :odbc :oracle
+  '(:postgresql :postgresql-socket :postgresql-socket3 :mysql :sqlite :sqlite3 :odbc :oracle
     #+allegro :aodbc))
 
 (defclass conn-specs ()
@@ -30,6 +36,7 @@
    (mysql :accessor mysql-spec :initform nil)
    (postgresql :accessor postgresql-spec :initform nil)
    (postgresql-socket :accessor postgresql-socket-spec :initform nil)
+   (postgresql-socket3 :accessor postgresql-socket3-spec :initform nil)
    (sqlite :accessor sqlite-spec :initform nil)
    (sqlite3 :accessor sqlite3-spec :initform nil)
    (odbc :accessor odbc-spec :initform nil)

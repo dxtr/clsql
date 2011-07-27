@@ -26,6 +26,7 @@
 (defvar *rt-oodml*)
 (defvar *rt-syntax*)
 (defvar *rt-time*)
+(defvar *rt-pool*)
 ;; Below must be set as nil since test-i18n.lisp is not loaded on all platforms.
 (defvar *rt-i18n* nil)
 
@@ -71,8 +72,12 @@
 
 (defun default-suites ()
   "The default list of tests to run."
-  (append *rt-internal* *rt-connection* *rt-basic* *rt-fddl* *rt-fdml*
+  (append *rt-connection* *rt-basic* *rt-fddl* *rt-fdml*
 	  *rt-ooddl* *rt-oodml* *rt-syntax* *rt-time* *rt-i18n*))
+
+(defun internal-suites ()
+  "The default internal suites that should run without any specific backend"
+  (append *rt-internal* *rt-pool*))
 
 
 (defvar *error-count* 0)
@@ -97,9 +102,10 @@
 
 
 (defun run-tests (&key (report-stream *standard-output*) (sexp-report-stream nil)
-		  (suites (default-suites)))
+		  (suites (append (internal-suites) (default-suites))))
   ;; clear SQL-OUTPUT cache
   (setq clsql-sys::*output-hash* (make-hash-table :test #'equal))
+  (setf *test-database-underlying-type* nil)
   (let ((specs (read-specs))
         (*report-stream* report-stream)
         (*sexp-report-stream* sexp-report-stream)
@@ -109,11 +115,16 @@
       (warn "Not running tests because test configuration file is missing")
       (return-from run-tests :skipped))
     (load-necessary-systems specs)
-    (dolist (db-type +all-db-types+)
-      (dolist (spec (db-type-spec db-type specs))
-        (let ((*test-connection-spec* spec)
-              (*test-connection-db-type* db-type))
-          (do-tests-for-backend db-type spec :suites suites)))))
+    ;;run the internal suites
+    (do-tests-for-internals :suites (intersection suites (internal-suites)))
+    ;; run backend-specific tests
+    (let ((suites (intersection suites (default-suites))))
+      (when suites
+        (dolist (db-type +all-db-types+)
+          (dolist (spec (db-type-spec db-type specs))
+            (let ((*test-connection-spec* spec)
+                  (*test-connection-db-type* db-type))
+              (do-tests-for-backend db-type spec :suites suites)))))))
   (zerop *error-count*))
 
 (defun load-necessary-systems (specs)
@@ -147,6 +158,34 @@
               "")
           ))
 
+(defun do-tests-for-internals (&key (suites (internal-suites)))
+  (write-report-banner "Test Suite" "CLSQL Internals" *report-stream*
+                       "N/A")
+  (%do-tests suites nil))
+
+(defun %do-tests (test-forms db-type)
+  (regression-test:rem-all-tests)
+  (dolist (test-form test-forms)
+    (eval test-form))
+
+  (let* ((cl:*print-right-margin* *test-report-width*)
+         (remaining (regression-test:do-tests *report-stream*)))
+    (when (regression-test:pending-tests)
+      (incf *error-count* (length remaining))))
+
+  (let ((sexp-error (list db-type
+                          *test-database-underlying-type*
+                          (get-universal-time)
+                          (length test-forms)
+                          (regression-test:pending-tests)
+                          (lisp-implementation-type)
+                          (lisp-implementation-version)
+                          (machine-type))))
+    (when *sexp-report-stream*
+      (write sexp-error :stream *sexp-report-stream* :readably t))
+    (push sexp-error *error-list*))
+  )
+
 (defun do-tests-for-backend (db-type spec &key
 			     (suites (default-suites)) )
   (test-connect-to-database db-type spec)
@@ -157,26 +196,7 @@
            (write-report-banner "Test Suite" db-type *report-stream*
 				(database-name-from-spec spec db-type))
 
-           (regression-test:rem-all-tests)
-           (dolist (test-form test-forms)
-             (eval test-form))
-
-           (let* ((cl:*print-right-margin* *test-report-width*)
-                  (remaining (regression-test:do-tests *report-stream*)))
-             (when (regression-test:pending-tests)
-               (incf *error-count* (length remaining))))
-
-           (let ((sexp-error (list db-type
-                                   *test-database-underlying-type*
-                                   (get-universal-time)
-                                   (length test-forms)
-                                   (regression-test:pending-tests)
-                                   (lisp-implementation-type)
-                                   (lisp-implementation-version)
-                                   (machine-type))))
-             (when *sexp-report-stream*
-               (write sexp-error :stream *sexp-report-stream* :readably t))
-             (push sexp-error *error-list*))
+         (%do-tests test-forms db-type)
 
            (format *report-stream* "~&Tests skipped:")
            (if skip-tests
@@ -300,7 +320,7 @@
 			      :oodml/update-records/6 :oodml/update-records/7
 			      :oodml/update-records/8 :oodml/update-records/9
 			      :oodml/update-records/9-slots :oodml/update-records/10
-			      :oodml/update-records/11 :oodml/update-instance/3
+			      :oodml/update-records/11 :OODML/UPDATE-RECORDS/12 :oodml/update-instance/3
 			      :oodml/update-instance/4 :oodml/update-instance/5
 			      :oodml/update-instance/6 :oodml/update-instance/7
 			      :oodml/db-auto-sync/3 :oodml/db-auto-sync/4))
@@ -310,6 +330,22 @@
                (clsql-sys:in test
                              :time/pg/fdml/usec :time/pg/oodml/no-usec :time/pg/oodml/usec))
           (push (cons test "Postgres specific test.")
+                skip-tests))
+         ((and (eql *test-database-type* :postgresql-socket3)
+               (clsql-sys:in test :BASIC/SELECT/2 :basic/select/3))
+          (push (cons test "Postgres-socket3 always auto types")
+                skip-tests))
+         ((and (eql *test-database-type* :postgresql-socket3)
+               (clsql-sys:in test :fdml/select/18))
+          (push (cons test "Postgres-socket3 doesnt support attribute based type coersion")
+                skip-tests))
+         ((and (eql *test-database-type* :postgresql-socket3)
+               (clsql-sys:in test :basic/map/1 :basic/map/2 :basic/map/3 :basic/map/4
+                :basic/do/1 :basic/do/2 :fdml/do-query/1 :fdml/map-query/1
+                :fdml/map-query/2 :fdml/map-query/3 :fdml/map-query/4 :fdml/loop/1
+                :fdml/loop/2 :fdml/loop/3
+                ))
+          (push (cons test "postgresql-socket3 doesnt support cursoring interface")
                 skip-tests))
          ((and (member *test-database-underlying-type* '(:mysql))
                (clsql-sys:in test :time/cross-platform/msec
