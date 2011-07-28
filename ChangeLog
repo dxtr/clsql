@@ -1,3 +1,38 @@
+2011-07-28  Russ Tyndall  <russ@acceleration.net>
+
+	* db-postgresql-socket3/: Added a backend that utilized postgres
+	socket api version 3.  Uses the cl-postgres project (from
+	postmodern) to handle this.  Allows use of parameterized /
+	prepared queries using clsql:command-object
+
+	* sql/{expressions,fddl, generic-postgresql, ooddl}.lisp:
+	Change how database identifiers are emitted to hopefully make this
+	less brittle, and more easily intuitable.
+
+	Previously every code path that wanted to emit a
+	database identifier was responsible for coercing what was provided
+	into a correctly escaped string.  Sometimes two or three functions
+	in a row were trying to correctly quote and output that string.  I
+	have tried to centralize this type coercion and logic into a
+	single code path.
+
+	everything should now call (escaped-database-identifier thing)
+	immediately before splicing a database identifier into string being
+	sent to the database
+
+   	* sql/oodml.lisp: added method choose-database-for-instance, which
+	allows overriding which database connections are used based on
+	object type.  Can be used to prevent connection conflicts in
+	multi-threaded environments
+
+	* sql/syntax.lisp: [foo bar] and [foo.bar] read into the same
+	clsql expression now (they used to be output the same, but after
+	the above database-identifier change, they were output separately
+
+	* test/: Better, more tests, better type coercion in tests and
+	throughout (%get-int)
+
+
 2011-07-16  Kevin Rosenberg <kevin@rosenberg.net>
 	* Version 5.4.0 release
 
