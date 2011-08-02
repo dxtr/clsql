@@ -1,6 +1,6 @@
 (in-package #:clsql-tests)
 
-#.(clsql:locally-enable-sql-reader-syntax)
+(clsql-sys:file-enable-sql-reader-syntax)
 
 (defparameter artist1 nil)
 
@@ -34,4 +34,3 @@
  		(mapc #'clsql-sys:drop-sequence
  		      (list "artist_artist_id_seq"))))))
 
-#.(clsql:restore-sql-reader-syntax-state)

@@ -1,6 +1,6 @@
 (in-package #:clsql-tests)
 
-#.(clsql:locally-enable-sql-reader-syntax)
+(clsql-sys:file-enable-sql-reader-syntax)
 
 (defparameter basenode nil)
 (defparameter derivednode1 nil)
@@ -121,4 +121,3 @@
 			 theme_theme_id_seq nodeuser_user_id_seq)
 		       )))))
 
-#.(clsql:restore-sql-reader-syntax-state)

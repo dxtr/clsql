@@ -14,7 +14,7 @@
 
 (in-package #:clsql-tests)
 
-#.(clsql:locally-enable-sql-reader-syntax)
+(clsql-sys:file-enable-sql-reader-syntax)
 
 
 (setq *rt-syntax*
@@ -424,5 +424,3 @@
 		     (test test-out expected-result)
 		     "Test:~s didnt match ~S"
 		     test-out expected-result))))
-
-#.(clsql:restore-sql-reader-syntax-state)

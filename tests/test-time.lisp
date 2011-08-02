@@ -5,7 +5,7 @@
 ;;; Test time functions (time.lisp)
 
 (in-package #:clsql-tests)
-#.(clsql-sys:locally-enable-sql-reader-syntax)
+(clsql-sys:file-enable-sql-reader-syntax)
 
 (def-view-class datetest ()
   ((testtimetz :column "testtimetz"
@@ -440,4 +440,4 @@
 ))
 
 
-#.(clsql-sys:locally-disable-sql-reader-syntax)
+

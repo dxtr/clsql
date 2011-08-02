@@ -16,8 +16,7 @@
 
 
 (in-package #:clsql-tests)
-
-#.(clsql:locally-enable-sql-reader-syntax)
+(clsql-sys:file-enable-sql-reader-syntax)
 
 (def-dataset *ds-fddl*
   (:setup (lambda ()
@@ -450,5 +449,3 @@ B varchar(32))")
   (nil (t nil) t (t nil)))
 
   ))
-
-#.(clsql:restore-sql-reader-syntax-state)

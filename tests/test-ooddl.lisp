@@ -17,7 +17,7 @@
 
 (in-package #:clsql-tests)
 
-#.(clsql:locally-enable-sql-reader-syntax)
+(clsql-sys:file-enable-sql-reader-syntax)
 
 
 (def-view-class big ()
@@ -184,5 +184,4 @@
 
 ))
 
-#.(clsql:restore-sql-reader-syntax-state)
 

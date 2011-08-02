@@ -15,6 +15,7 @@
 ;;;; *************************************************************************
 
 (in-package #:clsql-tests)
+(clsql-sys:file-enable-sql-reader-syntax)
 
 (setq *rt-internal*
   '(
@@ -39,7 +40,6 @@
       "SELECT 'FOO' FROM BAR WHERE ID='Match?''?' AND CODE=$1")
 
     (deftest :int/output-caching/1
-     #.(locally-enable-sql-reader-syntax)
      ;; ensure that key generation and matching is working
      ;; so that this table doesnt balloon (more than designed)
      (list
@@ -60,7 +60,6 @@
      (1 2 2))
 
     (deftest :int/output-caching/2
-     #.(locally-enable-sql-reader-syntax)
      ;; ensure that we can disable the output cache and
      ;; still have everything work
      (let ((clsql-sys::*output-hash*))

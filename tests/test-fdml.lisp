@@ -16,8 +16,7 @@
 
 (in-package #:clsql-tests)
 
-#.(clsql:locally-enable-sql-reader-syntax)
-
+(clsql-sys:file-enable-sql-reader-syntax)
 ;;started defining an independent dataset that doesn't depend on the view-classes
 ;; but there is a *lot* of stuff in the file assuming that dataset.
 ;; (def-dataset *ds-fdml*
@@ -778,4 +777,3 @@
 
 ))
 
-#.(clsql:restore-sql-reader-syntax-state)

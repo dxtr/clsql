@@ -1,6 +1,6 @@
 (in-package #:clsql-tests)
 
-#.(clsql:locally-enable-sql-reader-syntax)
+(clsql-sys:file-enable-sql-reader-syntax)
 (defparameter company1 nil)
 (defparameter employee1 nil)
 (defparameter employee2 nil)
@@ -393,6 +393,4 @@
 		     '(employee company address employee-address))
 	       (ignore-errors
 		 (clsql-sys:execute-command "DROP TABLE ea_join")))))
-
-#.(clsql:restore-sql-reader-syntax-state)
 
