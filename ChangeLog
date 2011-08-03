@@ -1,3 +1,6 @@
+2011-08-03  Kevin Rosenberg <kevin@rosenberg.net>
+	* CLSQL 6.0.0 released
+
 2011-07-28  Russ Tyndall  <russ@acceleration.net>
 
 	* db-postgresql-socket3/: Added a backend that utilized postgres
