@@ -16,6 +16,12 @@
 
 (in-package #:clsql-sys)
 
+(defun %get-int (v)
+  (etypecase v
+    (string (parse-integer v :junk-allowed t))
+    (integer v)
+    (number (truncate v))))
+
 (defvar +whitespace-chars+
   '(#\space #\tab #\newline #\return
     ;; Tested: sbcl unicode, allegrocl, openmcl,clisp use #\no-break_space

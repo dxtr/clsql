@@ -207,22 +207,28 @@ the query against." ))
              (coerce (column-names query) 'list))))
       (db-close-query query))))
 
-(defun list-table-indexes (table &key db unique hstmt)
+(defun list-table-indexes (table &key db unique hstmt
+                            &aux (table
+                                     (princ-to-string
+                                      (clsql-sys::unescaped-database-identifier table))))
   (declare (ignore hstmt))
   (let ((query (get-free-query db)))
     (unwind-protect
-        (progn
-          (with-slots (hstmt) query
-            (unless hstmt
-              (setf hstmt (%new-statement-handle (hdbc db))))
-            (%table-statistics table hstmt :unique unique)
-            (%initialize-query query nil nil)
-            (values
-             (db-fetch-query-results query)
-             (coerce (column-names query) 'list))))
+         (progn
+           (with-slots (hstmt) query
+             (unless hstmt
+               (setf hstmt (%new-statement-handle (hdbc db))))
+             (%table-statistics table hstmt :unique unique)
+             (%initialize-query query nil nil)
+             (values
+              (db-fetch-query-results query)
+              (coerce (column-names query) 'list))))
       (db-close-query query))))
 
-(defun list-all-table-columns (table &key db hstmt)
+(defun list-all-table-columns (table &key db hstmt
+                                &aux (table
+                                         (princ-to-string
+                                          (clsql-sys::unescaped-database-identifier table))))
   (declare (ignore hstmt))
   (db-describe-columns db nil nil table nil))   ;; use nil rather than "" for unspecified values
 

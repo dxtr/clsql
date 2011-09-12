@@ -1017,16 +1017,18 @@ as possible second argument) to the desired representation of date/time/timestam
   (with-error-handling (:hstmt hstmt)
     (SQLTables hstmt +null-ptr+ 0 +null-ptr+ 0 +null-ptr+ 0 +null-ptr+ 0)))
 
-(defun %table-statistics (table hstmt &key unique (ensure t))
+(defun %table-statistics (table hstmt &key unique (ensure t)
+                           &aux (table (princ-to-string
+                                        (clsql-sys::unescaped-database-identifier table))))
   (with-cstrings ((table-cs table))
-    (with-error-handling (:hstmt hstmt)
-      (SQLStatistics
-       hstmt
-       +null-ptr+ 0
-       +null-ptr+ 0
-       table-cs $SQL_NTS
-       (if unique $SQL_INDEX_UNIQUE $SQL_INDEX_ALL)
-       (if ensure $SQL_ENSURE $SQL_QUICK)))))
+   (with-error-handling (:hstmt hstmt)
+       (SQLStatistics
+        hstmt
+        +null-ptr+ 0
+        +null-ptr+ 0
+        table-cs $SQL_NTS
+        (if unique $SQL_INDEX_UNIQUE $SQL_INDEX_ALL)
+        (if ensure $SQL_ENSURE $SQL_QUICK)))))
 
 (defun %list-data-sources (henv)
   (let ((results nil))

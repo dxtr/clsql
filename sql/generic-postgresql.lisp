@@ -140,10 +140,11 @@
               database nil nil))
        result))))
 
-(defmethod database-list-attributes ((table string)
+(defmethod database-list-attributes ((table %database-identifier)
                                      (database generic-postgresql-database)
                                      &key (owner nil))
-  (let* ((owner-clause
+  (let* ((table (unescaped-database-identifier table))
+         (owner-clause
           (cond ((stringp owner)
                  (format nil " AND (relowner=(SELECT usesysid FROM pg_user WHERE usename='~A'))" owner))
                 ((null owner) " AND (not (relowner=1))")
@@ -166,9 +167,12 @@
                                                "tableoid") :test #'equal))
                    result))))
 
-(defmethod database-attribute-type (attribute (table string)
+(defmethod database-attribute-type ((attribute %database-identifier)
+                                    (table %database-identifier)
                                     (database generic-postgresql-database)
-                                    &key (owner nil))
+                                    &key (owner nil)
+                                    &aux (table (unescaped-database-identifier table))
+                                    (attribute (unescaped-database-identifier attribute)))
   (let ((row (car (database-query
                    (format nil "SELECT pg_type.typname,pg_attribute.attlen,pg_attribute.atttypmod,pg_attribute.attnotnull FROM pg_type,pg_class,pg_attribute WHERE pg_class.oid=pg_attribute.attrelid AND pg_class.relname='~A' AND pg_attribute.attname='~A' AND pg_attribute.atttypid=pg_type.oid~A"
                            (string-downcase table)

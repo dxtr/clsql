@@ -309,8 +309,10 @@ nil by default which means that only attributes owned by users
 are listed. If OWNER is a string denoting a user name, only
 attributes owned by OWNER are listed. If OWNER is :all then all
 attributes are listed."
-  (database-list-attributes (escaped-database-identifier name database) database
-                            :owner owner))
+  (database-list-attributes
+   (database-identifier name database)
+   database
+   :owner owner))
 
 (defun attribute-type (attribute table &key (owner nil)
                                  (database *default-database*))
@@ -323,8 +325,8 @@ returned. If OWNER is a string denoting a user name, the
 attribute, if it exists, must be owned by OWNER else nil is
 returned, whereas if OWNER is :all then the attribute, if it
 exists, will be returned regardless of its owner."
-  (database-attribute-type (escaped-database-identifier attribute database)
-                           (escaped-database-identifier table database)
+  (database-attribute-type (database-identifier attribute database)
+                           (database-identifier table database)
                            database
                            :owner owner))
 
@@ -342,7 +344,7 @@ second element is its SQL type, the third is the type precision,
 the fourth is the scale of the attribute and the fifth is 1 if
 the attribute accepts null values and otherwise 0."
   (with-slots (attribute-cache) database
-    (let ((table-ident (escaped-database-identifier table database)))
+    (let ((table-ident (database-identifier table database)))
       (multiple-value-bind (val found) (gethash table-ident attribute-cache)
         (if (and found (second val))
             (second val)
@@ -350,7 +352,7 @@ the attribute accepts null values and otherwise 0."
                                      (cons attribute
                                            (multiple-value-list
                                             (database-attribute-type
-                                             (escaped-database-identifier attribute
+                                             (database-identifier attribute
                                                                   database)
                                              table-ident
                                              database

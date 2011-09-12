@@ -250,8 +250,9 @@ on schema since that's what tends to be exposed. Some DBs like mssql
   (%database-list-* database "VIEW" owner))
 
 
-(defmethod database-list-attributes ((table string) (database generic-odbc-database)
-                                     &key (owner nil))
+(defmethod database-list-attributes ((table %database-identifier) (database generic-odbc-database)
+                                     &key (owner nil)
+                                     &aux (table (unescaped-database-identifier table)))
   (declare (ignore owner))
   (multiple-value-bind (rows col-names)
       (funcall (list-all-table-columns-fn database) table
@@ -261,8 +262,11 @@ on schema since that's what tends to be exposed. Some DBs like mssql
     (loop for row in rows
         collect (fourth row))))
 
-(defmethod database-attribute-type ((attribute string) (table string) (database generic-odbc-database)
-                                    &key (owner nil))
+(defmethod database-attribute-type ((attribute %database-identifier) (table %database-identifier)
+                                    (database generic-odbc-database)
+                                    &key (owner nil)
+                                    &aux (table (unescaped-database-identifier table))
+                                    (attribute (unescaped-database-identifier attribute)))
   (declare (ignore owner))
   (multiple-value-bind (rows col-names)
       (funcall (list-all-table-columns-fn database) table

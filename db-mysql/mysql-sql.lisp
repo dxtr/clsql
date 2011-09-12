@@ -404,8 +404,10 @@
       (unless (find col results :test #'string-equal)
         (push col results)))))
 
-(defmethod database-list-attributes ((table string) (database mysql-database)
-                                     &key (owner nil))
+(defmethod database-list-attributes ((table clsql-sys::%database-identifier)
+                                     (database mysql-database)
+                                     &key (owner nil)
+                                     &aux (table (unescaped-database-identifier table)))
   (declare (ignore owner))
   (mapcar #'car
           (database-query
@@ -413,9 +415,12 @@
                                                 table database))
            database nil nil)))
 
-(defmethod database-attribute-type (attribute (table string)
+(defmethod database-attribute-type ((attribute clsql-sys::%database-identifier)
+                                    (table clsql-sys::%database-identifier)
                                     (database mysql-database)
-                                    &key (owner nil))
+                                    &key (owner nil)
+                                    &aux (table (unescaped-database-identifier table))
+                                    (attribute (unescaped-database-identifier attribute)))
   (declare (ignore owner))
   (let ((row (car (database-query
                    (format nil
