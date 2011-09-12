@@ -1,3 +1,11 @@
+2011-09-12  Russ Tyndall  <russ@acceleration.net>
+	* sql/fddl.lisp sql/generic-postgres.lisp db-mysql/mysql-sql.lisp
+	sql/generic-odbc.lisp sql/odbc-api.lisp sql/odbc-dbi.lisp
+
+	Fix bugs in list-attribute(s|-types) where passing an escaped,
+	instead of unescaped column name, caused these functions to return
+	less data than they should have.
+
 2011-08-03  Kevin Rosenberg <kevin@rosenberg.net>
 	* CLSQL 6.0.0 released
 
