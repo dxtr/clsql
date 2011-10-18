@@ -586,8 +586,9 @@ as possible second argument) to the desired representation of date/time/timestam
 
 (defun sql-to-c-type (sql-type)
   (ecase sql-type
+    ;; Added -10 for MSSQL ntext type and -11 for nvarchar
     ((#.$SQL_CHAR #.$SQL_VARCHAR #.$SQL_LONGVARCHAR
-      #.$SQL_NUMERIC #.$SQL_DECIMAL -8 -9 -10) $SQL_C_CHAR) ;; Added -10 for MSSQL ntext type
+      #.$SQL_NUMERIC #.$sql_decimal -8 -9 -10 -11) $SQL_C_CHAR)
     (#.$SQL_INTEGER $SQL_C_SLONG)
     (#.$SQL_BIGINT $SQL_C_SBIGINT)
     (#.$SQL_SMALLINT $SQL_C_SSHORT)
