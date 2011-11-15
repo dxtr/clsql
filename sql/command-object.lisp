@@ -23,13 +23,16 @@
 (in-package #:clsql-sys)
 
 (defclass command-object ()
-  ((expression :accessor expression :initarg :expression :initform nil)
-   (parameters :accessor parameters :initarg :parameters :initform nil)
+  ((expression :accessor expression :initarg :expression :initform nil
+               :documentation "query that refers to parameters using \"$1\", \"$2\", \"$n\".
+       These match positions in the parameters list.")
+   (parameters :accessor parameters :initarg :parameters :initform nil
+               :documentation "list of parameters")
    (prepared-name :accessor prepared-name :initarg :prepared-name :initform ""
     :documentation "If we want this to be a prepared statement, give it a name
        to identify it to this session")
    (has-been-prepared :accessor has-been-prepared :initarg :has-been-prepared :initform nil
-		      :documentation "Have we already prepared this command object")
+		      :documentation "Have we already prepared this command object?")
    ))
 
 (defmethod initialize-instance :after ((o command-object) &key &allow-other-keys )
