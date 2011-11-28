@@ -22,17 +22,12 @@ May be locally bound to something else if a certain type is necessary.")
 
 
 (defvar *binary-format* :unsigned-byte-vector)
-(defvar *time-conversion-function*
-    (lambda (universal-time &optional fraction)
-       (let ((time (clsql-sys:utime->time universal-time)))
-	 (setf time (clsql-sys:time+
-		     time
-		     (clsql-sys:make-duration :usec (/ fraction 1000))))
-	 (clsql-sys:format-time nil time :format :iso))
-      #+ignore
-      universal-time)
-   "Bound to a function that converts from a Lisp universal time fixnum (and a fractional
-as possible second argument) to the desired representation of date/time/timestamp. By default, returns an iso-timestring.")
+(defvar *time-format*
+  (lambda (time)
+    (clsql-sys:format-time nil time :format :iso))
+   "Bound to a function that converts from a clsql:wall-time to the desired
+    representation of date/time/timestamp.
+    By default, returns an iso-timestring.")
 
 (defvar +null-ptr+ (make-null-pointer :byte))
 (defparameter +null-handle-ptr+ (make-null-pointer :void))
@@ -690,13 +685,11 @@ as possible second argument) to the desired representation of date/time/timestam
                    (t
                     (case c-type
                       ((#.$SQL_C_DATE #.$SQL_C_TYPE_DATE)
-                       (funcall *time-conversion-function* (date-to-universal-time data-ptr)))
+                       (funcall *time-format* (date-to-clsql-time data-ptr)))
                       ((#.$SQL_C_TIME #.$SQL_C_TYPE_TIME)
-                       (multiple-value-bind (universal-time frac) (time-to-universal-time data-ptr)
-                         (funcall *time-conversion-function* universal-time frac)))
+		       (funcall *time-format* (time-to-clsql-time data-ptr)))
                       ((#.$SQL_C_TIMESTAMP #.$SQL_C_TYPE_TIMESTAMP)
-                       (multiple-value-bind (universal-time frac) (timestamp-to-universal-time data-ptr)
-                         (funcall *time-conversion-function* universal-time frac)))
+		       (funcall *time-format* (timestamp-to-clsql-time data-ptr)))
                       (#.$SQL_INTEGER
                        (get-cast-int data-ptr))
                       (#.$SQL_C_FLOAT
@@ -947,17 +940,17 @@ as possible second argument) to the desired representation of date/time/timestam
 (def-type c-time-ptr-type (* (:struct sql-c-time)))
 (def-type c-date-ptr-type (* (:struct sql-c-date)))
 
-(defun timestamp-to-universal-time (ptr)
+(defun timestamp-to-clsql-time (ptr)
   (declare (type c-timestamp-ptr-type ptr))
-  (values
-   (encode-universal-time
-    (get-slot-value ptr 'sql-c-timestamp 'second)
-    (get-slot-value ptr 'sql-c-timestamp 'minute)
-    (get-slot-value ptr 'sql-c-timestamp 'hour)
-    (get-slot-value ptr 'sql-c-timestamp 'day)
-    (get-slot-value ptr 'sql-c-timestamp 'month)
-    (get-slot-value ptr 'sql-c-timestamp 'year))
-   (get-slot-value ptr 'sql-c-timestamp 'fraction)))
+  (clsql-sys:make-time
+   :second (get-slot-value ptr 'sql-c-timestamp 'second)
+   :minute (get-slot-value ptr 'sql-c-timestamp 'minute)
+   :hour (get-slot-value ptr 'sql-c-timestamp 'hour)
+   :day (get-slot-value ptr 'sql-c-timestamp 'day)
+   :month (get-slot-value ptr 'sql-c-timestamp 'month)
+   :year (get-slot-value ptr 'sql-c-timestamp 'year)
+   :usec (let ((frac (get-slot-value ptr 'sql-c-timestamp 'fraction)))
+	   (if frac (/ frac 1000) 0))))
 
 (defun universal-time-to-timestamp (time &optional (fraction 0))
   "TODO: Dead function?"
@@ -987,21 +980,20 @@ as possible second argument) to the desired representation of date/time/timestam
           (get-slot-value ptr 'sql-c-timestamp 'fraction) fraction)
       ptr))
 
-(defun date-to-universal-time (ptr)
+(defun date-to-clsql-time (ptr)
   (declare (type c-date-ptr-type ptr))
-  (encode-universal-time
-   0 0 0
-   (get-slot-value ptr 'sql-c-timestamp 'day)
-   (get-slot-value ptr 'sql-c-timestamp 'month)
-   (get-slot-value ptr 'sql-c-timestamp 'year)))
+  (clsql-sys:make-time
+   :second 0 :minute 0 :hour 0
+   :day (get-slot-value ptr 'sql-c-timestamp 'day)
+   :month (get-slot-value ptr 'sql-c-timestamp 'month)
+   :year (get-slot-value ptr 'sql-c-timestamp 'year)))
 
-(defun time-to-universal-time (ptr)
+(defun time-to-clsql-time (ptr)
   (declare (type c-time-ptr-type ptr))
-  (encode-universal-time
-   (get-slot-value ptr 'sql-c-timestamp 'second)
-   (get-slot-value ptr 'sql-c-timestamp 'minute)
-   (get-slot-value ptr 'sql-c-timestamp 'hour)
-   1 1 0))
+  (clsql-sys:make-time
+   :second (get-slot-value ptr 'sql-c-timestamp 'second)
+   :minute (get-slot-value ptr 'sql-c-timestamp 'minute)
+   :hour (get-slot-value ptr 'sql-c-timestamp 'hour)))
 
 
 ;;; Added by KMR

@@ -437,7 +437,23 @@
     #.(iso-timestring (parse-timestring "2008-09-09T14:37:29.000278-04:00"))
     #.(iso-timestring (parse-timestring "2008-09-09T14:37:29.000278-04:00")))
 
+(deftest :time/historic-datetimes
+  (with-dataset *cross-platform-datetest*
+    (let ((time (parse-timestring "1800-09-09T14:37:29")))
+      (clsql-sys:insert-records :into [datetest]
+                                :attributes '([testtime])
+                                :values (list time))
+      (let ((testtime
+              (first (clsql:select [testtime]
+                       :from [datetest] :flatp t
+                       :where [= [testtime] time] ))))
+        (format-time nil (parse-timestring testtime) :format :iso)
+        )))
+  #.(format-time nil (parse-timestring "1800-09-09T14:37:29") :format :iso))
+
 ))
+
+
 
 
 

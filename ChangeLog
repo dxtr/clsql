@@ -1,3 +1,13 @@
+2011-11-28  Russ Tyndall  <russ@acceleration.net>
+	* db-odbc/odbc-api.lisp, tests/test-time.lisp
+
+	In ODBC backend, avoid going through the common lisp
+	universal-time type (because it lacks support for historic dates)
+
+	*time-conversion-function* renamed to *time-format*
+
+	Patch from: Francisco Vides Fernandez
+
 2011-10-18  Russ Tyndall  <russ@acceleration.net>
 	* db-odbc/odbc-api.lisp
 
