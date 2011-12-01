@@ -25,7 +25,7 @@
      #:+null-ptr+
      #:+max-precision+
      #:*info-output*
-     #:*time-conversion-function*
+     #:*time-format*
      #:get-cast-long
      #:%free-statement
      #:%disconnect
