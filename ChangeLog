@@ -1,3 +1,12 @@
+2011-01-04  Russ Tyndall  <russ@acceleration.net>
+	* sql/operations.lisp
+
+	Fixed bug reported by JTK related to the not-null sql-expression
+	especially as used in conjunction with the is operator.
+
+	Made null called with more than one argument throw an exception
+	instead of silently discarding all arguments past the first
+
 2012-01-04  Nathan Bird  <nathan@acceleration.net>
 
 	* db-odbc/odbc-api.lisp (%sql-driver-connect): in the call to

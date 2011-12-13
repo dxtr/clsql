@@ -82,15 +82,20 @@
   (make-instance 'sql-query-modifier-exp
                  :modifier 'having :components rest))
 
-(defsql sql-null (:symbol "null") (&rest rest)
-  (if rest
+(defsql sql-null (:symbol "null") (&optional not-null-thing)
+  (if not-null-thing
       (make-instance 'sql-relational-exp :operator 'is
-                     :sub-expressions (list (car rest) nil))
+                     :sub-expressions (list not-null-thing nil))
       (make-instance 'sql-value-exp :components 'null)))
 
-(defsql sql-not-null (:symbol "not-null") ()
-  (make-instance 'sql-value-exp
-                 :components '|NOT NULL|))
+(defsql sql-not-null (:symbol "not-null") (&optional not-null-thing)
+  (if not-null-thing
+      (make-instance
+       'sql-relational-exp
+       :operator 'IS
+       :sub-expressions (list not-null-thing
+                              (sql-expression :string "NOT NULL")))
+      (sql-expression :string "NOT NULL")))
 
 (defsql sql-exists (:symbol "exists") (&rest rest)
   (make-instance 'sql-function-exp

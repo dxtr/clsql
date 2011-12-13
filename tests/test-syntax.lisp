@@ -190,6 +190,18 @@
     (clsql:sql [not [null]])
   "(NOT (NULL))")
 
+(deftest :syntax/null/5
+    (clsql:sql [is [foo.bar] [null]])
+  "(FOO.BAR IS NULL)")
+
+(deftest :syntax/null/6
+    (clsql:sql [is [foo.bar] [not-null]])
+  "(FOO.BAR IS NOT NULL)")
+
+(deftest :syntax/null/7
+    (clsql:sql [not-null [foo.bar]])
+  "(FOO.BAR IS NOT NULL)")
+
 
 
 (deftest :syntax/relational/1
