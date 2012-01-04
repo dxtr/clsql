@@ -1,3 +1,18 @@
+2012-01-04  Nathan Bird  <nathan@acceleration.net>
+
+	* db-odbc/odbc-api.lisp (%sql-driver-connect): in the call to
+	odbc's SQLDriverConnect default the WindowHandle argument to a null ptr so
+	that connecting with :connection-string will work in the default
+	case of SQL_DRIVER_NOPROMPT.
+
+	I.e. you can now do things like:
+	(clsql:connect '("DsnName" "UserName" "" :connection-string
+	"DRIVER={FreeTDS};SERVER=...;DATABASE=...;UID=...;PWD=...;PORT=1433;TDS_Version=8.0;APP=clsql"
+	:database-type :odbc))
+
+	I belibe the DsnName and Username at that point are only used when
+	printing the connection information.
+
 2011-12-20  Kevin Rosenberg <kevin@rosenberg.net>
 	* Version 6.1.1
 	* db-oracle/oracle.lisp: Typo correction (Elias Martenson)

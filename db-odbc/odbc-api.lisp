@@ -226,7 +226,8 @@ May be locally bound to something else if a certain type is necessary.")
        (with-error-handling
            (:hdbc hdbc)
            (SQLDriverConnect hdbc
-                             window-handle
+                             (or window-handle
+                                 +null-handle-ptr+)
                              connection-ptr $SQL_NTS
                              completed-connection-string-ptr $SQL_MAX_CONN_OUT
                              completed-connection-length
