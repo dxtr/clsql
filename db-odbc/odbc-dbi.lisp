@@ -474,7 +474,7 @@ This makes the functions db-execute-command and db-query thread safe."
                  (#.odbc::$SQL_C_TYPE_TIMESTAMP :time)
                  (#.odbc::$SQL_C_CHAR ;; TODO: Read this as rational instead of double
                    (or (case (aref column-sql-types i)
-                         (#.odbc::$SQL_NUMERIC :double))
+                         ((#.odbc::$SQL_NUMERIC #.odbc::$SQL_DECIMAL) :double))
                        T))
 
                  (t t)))

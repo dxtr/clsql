@@ -1,3 +1,8 @@
+2012-01-05  Nathan Bird  <nathan@acceleration.net>
+
+	* db-odbc/odbc-dbi.lisp: handle sql decimal type in the same way
+	as numeric type-- read into a double float.
+
 2011-01-04  Russ Tyndall  <russ@acceleration.net>
 	* sql/operations.lisp
 
