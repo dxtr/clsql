@@ -880,61 +880,47 @@ May be locally bound to something else if a certain type is necessary.")
 
 
 (defun read-data-in-chunks (hstmt column-nr data-ptr c-type sql-type
-                                      out-len-ptr result-type)
+                            out-len-ptr result-type)
   (declare (type long-ptr-type out-len-ptr)
            (ignore result-type))
+
   (let* ((res (%sql-get-data hstmt column-nr c-type data-ptr
                              +max-precision+ out-len-ptr))
          (out-len (get-cast-long out-len-ptr))
-         (offset 0)
-         (result (case out-len
-                   (#.$SQL_NULL_DATA
-                    (return-from read-data-in-chunks *null*))
-                   (#.$SQL_NO_TOTAL ;; don't know how long it is going to be
-                                    (let ((str (make-array 0 :element-type 'character :adjustable t)))
-                                      (loop do (if (= c-type #.$SQL_CHAR)
-                                                   (let ((data-length (foreign-string-length data-ptr)))
-                                                     (adjust-array str (+ offset data-length)
-                                                                   :initial-element #\?)
-                                                     (setf offset (%cstring-into-vector
-                                                                   data-ptr str
-                                                                   offset
-                                                                   data-length)))
-                                                 (error 'clsql:sql-database-error :message "wrong type. preliminary."))
-                                            while (and (= res $SQL_SUCCESS_WITH_INFO)
-                                                       (equal (sql-state +null-handle-ptr+ +null-handle-ptr+ hstmt)
-                                                              "01004"))
-                                            do (setf res (%sql-get-data hstmt column-nr c-type data-ptr
-                                                                        +max-precision+ out-len-ptr)))
-                                      (setf str (coerce str 'string))
-                                      (if (= sql-type $SQL_DECIMAL)
-                                          (let ((*read-base* 10))
-                                            (read-from-string str))
-                                        str)))
-                   (otherwise
-                    (let ((str (make-string out-len)))
-                      (loop
-                        do
-                           (if (= c-type #.$SQL_CHAR)
-                               (setf offset (%cstring-into-vector ;string
-                                             data-ptr str
-                                             offset
-                                             (min out-len (1- +max-precision+))))
-                               (error 'clsql:sql-database-error :message "wrong type. preliminary."))
-                        while
-                        (and (= res $SQL_SUCCESS_WITH_INFO)
-                             (>= out-len +max-precision+))
-                        do (setf res  (%sql-get-data hstmt column-nr c-type data-ptr
-                                                     +max-precision+ out-len-ptr)
-                                 out-len (get-cast-long out-len-ptr)))
-                      (if (= sql-type $SQL_DECIMAL)
-                          (let ((*read-base* 10)
-                                (*read-default-float-format* 'double-float))
-                            (read-from-string str))
-                          str))))))
+         (result (if (equal out-len #.$SQL_NULL_DATA)
+                     (return-from read-data-in-chunks *null*)
+                     
+                     ;;this isn't the most efficient way of doing it:
+                     ;;the foreign string gets copied to lisp, then
+                     ;;that is copied into the final string. However,
+                     ;;the previous impl that tried to copy one
+                     ;;character over at a time failed miserably on
+                     ;;multibyte characters.
+                     ;;
+                     ;;In the face of multibyte characters, the out-len
+                     ;;tells us the length in bytes but that doesn't
+                     ;;particularly help us here in allocating a lisp
+                     ;;array. So our best strategy is to just let the
+                     ;;foreign library that's already dealing with
+                     ;;encodings do its thing.
+                   
+                     (with-output-to-string (str)
+                       (loop do (if (= c-type #.$SQL_CHAR)
+                                    (write-sequence (get-cast-foreign-string data-ptr) str)
+                                    (error 'clsql:sql-database-error
+                                           :message "wrong type. preliminary."))
+                             while (and (= res $SQL_SUCCESS_WITH_INFO)
+                                        (equal (sql-state +null-handle-ptr+ +null-handle-ptr+ hstmt)
+                                               "01004"))
+                             do (setf res (%sql-get-data hstmt column-nr c-type data-ptr
+                                                         +max-precision+ out-len-ptr)))))))
 
-    (setf (deref-pointer out-len-ptr #.$ODBC-LONG-TYPE) #.$SQL_NO_TOTAL) ;; reset the out length for the next row
-    result))
+    ;; reset the out length for the next row
+    (setf (deref-pointer out-len-ptr #.$ODBC-LONG-TYPE) #.$SQL_NO_TOTAL)
+    (if (= sql-type $SQL_DECIMAL)
+        (let ((*read-base* 10))
+          (read-from-string result))
+        result)))
 
 
 (def-type c-timestamp-ptr-type (* (:struct sql-c-timestamp)))

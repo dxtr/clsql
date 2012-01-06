@@ -36,4 +36,17 @@
                  :flatp t :field-names nil)))
  "Iñtërnâtiônàližætiøn")
 
+(deftest :basic/i18n/big/1
+    (let ((test-string (with-output-to-string (str)
+                         (dotimes (n 250)
+                           (write-sequence "Iñtërnâtiônàližætiøn" str)))))
+      (with-dataset *ds-bigtext*
+        (clsql-sys:execute-command
+         (format nil
+                 "INSERT INTO testbigtext (a) VALUES ('~a')"
+                 test-string))
+        (let ((res (first (clsql:query "SELECT a from testbigtext" :flatp t :field-names nil))))
+          (assert (equal test-string res) (test-string res)
+                  "Returned internationalization string was incorrect. Test :basic/i18n/big/1")))))
+
 ))
