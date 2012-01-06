@@ -48,21 +48,6 @@ May be locally bound to something else if a certain type is necessary.")
                 (char-code (char ,string i))))
         (setf (deref-array char-ptr '(:array :byte) ,size) 0)))))
 
-(defun %cstring-into-vector (ptr vector offset size-in-bytes)
-  (dotimes (i size-in-bytes)
-    (setf (schar vector offset)
-          (ensure-char-character
-              ;; this is MUCH faster than (sb-alien:deref ptr i) even though
-              ;; sb-alien:deref makes more sense. I snagged this by looking at
-              ;; cffi which we had used previously without this bug
-              #+(and sbcl (not cffi))
-              (sb-sys:sap-ref-8 (sb-alien:alien-sap ptr) i)
-              #-(and sbcl (not cffi))
-              (deref-array ptr '(:array :unsigned-char) i)
-       ))
-    (incf offset))
-  offset)
-
 (defmacro with-allocate-foreign-string ((var len) &body body)
   "Safely does uffi:allocate-foreign-string-- making sure we do the uffi:free-foreign-object"
   `(let ((,var))
