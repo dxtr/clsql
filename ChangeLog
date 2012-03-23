@@ -28,10 +28,10 @@
 
 	I.e. you can now do things like:
 	(clsql:connect '("DsnName" "UserName" "" :connection-string
-	"DRIVER={FreeTDS};SERVER=...;DATABASE=...;UID=...;PWD=...;PORT=1433;TDS_Version=8.0;APP=clsql"
-	:database-type :odbc))
+	"DRIVER={FreeTDS};SERVER=...;DATABASE=...;UID=...;PWD=...;PORT=1433;TDS_Version=8.0;APP=clsql")
+	:database-type :odbc)
 
-	I belibe the DsnName and Username at that point are only used when
+	I believe the DsnName and Username at that point are only used when
 	printing the connection information.
 
 2011-12-20  Kevin Rosenberg <kevin@rosenberg.net>
