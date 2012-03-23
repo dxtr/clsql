@@ -438,7 +438,7 @@ This file can contain forms to set site-specific paths as well as change
 	<title>Connection Specification</title>
 	<sect3>
 	  <title>Syntax of connection-spec</title>
-	  <synopsis>(<replaceable>dsn</replaceable> <replaceable>user</replaceable> <replaceable>password</replaceable>)</synopsis>
+	  <synopsis>(<replaceable>dsn</replaceable> <replaceable>user</replaceable> <replaceable>password</replaceable> &amp;key <replaceable>connection-string</replaceable>)</synopsis>
 	</sect3>
 	<sect3>
 	  <title>Description of connection-spec</title>
@@ -463,6 +463,15 @@ This file can contain forms to set site-specific paths as well as change
 		  use for authentication.</para>
 	      </listitem>
 	    </varlistentry>
+	    <varlistentry>
+	      <term><parameter>connection-string</parameter></term>
+	      <listitem>
+		<para>Raw connection string passed to the underlying
+		ODBC driver. Allows bypassing creating a DSN on the
+		server.</para>
+	      </listitem>
+	    </varlistentry>
+
 	  </variablelist>
 	</sect3>
       </sect2>
@@ -477,6 +486,26 @@ This file can contain forms to set site-specific paths as well as change
         </listitem>        
       </itemizedlist>
       </sect3>
+      </sect2>
+      <sect2><title>Connect Examples</title>
+	<screen>
+
+;; assumes a "mssql" DSN is configured on the lisp host, specifying database server
+;;  and database name.
+> (clsql:connect '("mssql" "database-user" "database-password") 
+               :database-type :odbc)
+=> #&lt;CLSQL-ODBC:ODBC-DATABASE mssql/database-user OPEN {100756D123}&gt;
+
+;; no DSN on the lisp host, specify connection information via :connection-string
+> (clsql:connect '("friendly-server-name" "friendly-username" "" 
+		 :connection-string "DRIVER={FreeTDS};SERVER=mssql-server;DATABASE=database-name;UID=database-user;PWD=database-password;PORT=1433;TDS_Version=8.0;APP=clsql") 
+               :database-type :odbc)
+=> #&lt;CLSQL-ODBC:ODBC-DATABASE friendly-server-name/friendly-username OPEN {100756D123}&gt;</screen>	
+	<para>
+          The <symbol>friendly-server-name</symbol>
+          and <symbol>friendly-username</symbol> are only used when
+          printing the connection object to a stream.
+        </para>
       </sect2>
     </sect1>
 
