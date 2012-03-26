@@ -871,9 +871,7 @@ uninclusive, and the args from that keyword to the end."
       (output-sql table database)
       (write-string " SET " *sql-stream*)
       (output-sql (apply #'vector (update-assignments)) database)
-      (when where
-        (write-string " WHERE " *sql-stream*)
-        (output-sql where database))))
+      (output-sql-where-clause where database)))
   t)
 
 ;; CREATE TABLE
