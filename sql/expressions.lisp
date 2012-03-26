@@ -673,6 +673,20 @@ uninclusive, and the args from that keyword to the end."
                            :group-by group-by :having having :order-by order-by
                            :inner-join inner-join :on on))))))
 
+(defun output-sql-where-clause (where database)
+  "ensure that we do not output a \"where\" sql keyword when we will
+    not output a clause. Also sets *in-subselect* to use SQL
+    parentheticals as needed."
+  (when where
+    (let ((where-out (string-trim
+		      '(#\newline #\space #\tab #\return)
+		      (with-output-to-string (*sql-stream*)
+			(let ((*in-subselect* t))
+			  (output-sql where database))))))
+      (when (> (length where-out) 0)
+	(write-string " WHERE " *sql-stream*)
+	(write-string where-out *sql-stream*)))))
+
 (defmethod output-sql ((query sql-query) database)
   (with-slots (distinct selections from where group-by having order-by
                         limit offset inner-join on all set-operation)
@@ -712,15 +726,7 @@ uninclusive, and the args from that keyword to the end."
     (when on
       (write-string " ON " *sql-stream*)
       (output-sql on database))
-    (when where
-      (let ((where-out (string-trim
-                        '(#\newline #\space #\tab #\return)
-                        (with-output-to-string (*sql-stream*)
-                          (let ((*in-subselect* t))
-                            (output-sql where database))))))
-        (when (> (length where-out) 0)
-          (write-string " WHERE " *sql-stream*)
-          (write-string where-out *sql-stream*))))
+    (output-sql-where-clause where database)
     (when group-by
       (write-string " GROUP BY " *sql-stream*)
       (if (listp group-by)
@@ -832,9 +838,7 @@ uninclusive, and the args from that keyword to the end."
     (typecase from
       ((or symbol string) (write-string (sql-escape from) *sql-stream*))
       (t  (output-sql from database)))
-    (when where
-      (write-string " WHERE " *sql-stream*)
-      (output-sql where database)))
+    (output-sql-where-clause where database))
   t)
 
 ;; UPDATE
