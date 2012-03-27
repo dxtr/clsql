@@ -417,9 +417,33 @@
                   [like (clsql:sql-expression :table table
                                              :attribute 'baz)
                         (clsql:sql table)])))
-  "(BETWEEN(THISTIME.BAR,(HIP * HOP),42) AND (THISTIME.BAZ LIKE 'THISTIME') AND BETWEEN(NEXTTIME.BAR,(HIP * HOP),43) AND (NEXTTIME.BAZ LIKE 'NEXTTIME') AND BETWEEN(SOMETIME.BAR,(HIP * HOP),44) AND (SOMETIME.BAZ LIKE 'SOMETIME') AND BETWEEN(NEVER.BAR,(HIP * HOP),45) AND (NEVER.BAZ LIKE 'NEVER'))")
+  "(BETWEEN(THISTIME.BAR,(HIP * HOP),42) AND (THISTIME.BAZ LIKE 'THISTIME') AND BETWEEN(NEXTTIME.BAR,(HIP * HOP),43) AND (NEXTTIME.BAZ LIKE 'NEXTTIME') AND BETWEEN(SOMETIME.BAR,(HIP * HOP),44) AND (SOMETIME.BAZ LIKE 'SOMETIME') AND BETWEEN(NEVER.BAR,(HIP * HOP),45) AND (NEVER.BAZ LIKE 'NEVER'))"
+ )
 
-))
+(deftest :syntax/subqueries/query
+ (clsql:sql
+  (clsql:sql-operation 'select [*]
+   :from [foo]
+   :where [in [id] [select [id] :from [bar]]]))
+ "SELECT * FROM FOO WHERE (ID IN (SELECT ID FROM BAR))")
+
+(deftest :syntax/subqueries/delete
+ (clsql:sql
+  (make-instance 'clsql-sys::sql-delete
+   :from [foo]
+   :where [in [id] [select [id] :from [bar]]]))
+ "DELETE FROM FOO WHERE (ID IN (SELECT ID FROM BAR))")
+
+(deftest :syntax/subqueries/update
+ (clsql:sql
+  (make-instance 'clsql-sys::sql-update
+   :attributes (list [id])
+   :values '(0)
+   :table [foo]
+   :where [in [id] [select [id] :from [bar]]]))
+ "UPDATE FOO SET ID = 0 WHERE (ID IN (SELECT ID FROM BAR))")
+
+ ))
 
 (defun test-output-sql/sql-ident-table ()
   (let ((tests `((,(make-instance 'sql-ident-table :name :foo) "FOO")
