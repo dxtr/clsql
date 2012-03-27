@@ -1,3 +1,16 @@
+2012-03-27  Ryan Davis  <ryan@acceleration.net>
+
+	* sql/expressions.lisp: Fixed bug with subqueries in the where
+	clause of update-records and delete-records generating invalid
+	SQL.
+	* tests/test-syntax.lisp: Added tests for using subqueries in the
+	where clause in update-records and delete-records. Moved asserts
+	in the test-output-sql/sql-ident-table function into the standard
+	test framework.
+	* doc/appendix.xml: added :connection-string to the information on
+	ODBC connection specs, and added example code connecting to ODBC
+	databases.
+
 2012-02-22  Nathan Bird  <nathan@acceleration.net>
 
 	* db-mysql/mysql-loader.lisp (*mysql-library-candidate-names*): If
