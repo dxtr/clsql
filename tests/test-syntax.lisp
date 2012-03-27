@@ -445,18 +445,21 @@
 
  ))
 
-(defun test-output-sql/sql-ident-table ()
-  (let ((tests `((,(make-instance 'sql-ident-table :name :foo) "FOO")
-		 (,(make-instance 'sql-ident-table :name :foo-bar) "FOO_BAR")
-		 (,(make-instance 'sql-ident-table :name "foo") "\"foo\"")
-		 (,(make-instance 'sql-ident-table :name '|foo bar|) "\"foo bar\"")
-		 (,(make-instance 'sql-ident-table :name :foo :table-alias :bar) "FOO BAR" )
-		 (,(make-instance 'sql-ident-table :name :foo_bar :table-alias :bar-bast) "FOO_BAR BAR_BAST")
-		 (,(make-instance 'sql-ident-table :name "foo" :table-alias "Bar") "\"foo\" \"Bar\"")
-		 (,(make-instance 'sql-ident-table :name '|foo bar| :table-alias :bast) "\"foo bar\" BAST"))))
-    (loop for (test expected-result) in tests
-	  for test-out = (with-output-to-string (*sql-stream*) (output-sql test nil))
-	  do (assert (string-equal test-out expected-result)
-		     (test test-out expected-result)
-		     "Test:~s didnt match ~S"
-		     test-out expected-result))))
+(let ((tests '(((:foo) "FOO")
+	       ((:foo-bar) "FOO_BAR")
+	       (("foo") "\"foo\"")
+	       (('|foo bar|) "\"foo bar\"")
+	       ((:foo :table-alias :bar) "FOO BAR" )
+	       ((:foo_bar :table-alias :bar-bast) "FOO_BAR BAR_BAST")
+	       (("foo" :table-alias "Bar") "\"foo\" \"Bar\"")
+	       (('|foo bar| :table-alias :bast) "\"foo bar\" BAST"))))
+
+  (push
+   `(deftest :syntax/sql-ident-table
+	(values ,@(mapcar
+		   #'(lambda (args)
+		       `(clsql:sql (make-instance 'clsql-sys:sql-ident-table
+						  :name ,@args)))
+		   (mapcar #'first tests)))
+      ,@(mapcar #'second tests))
+   *rt-syntax*))
