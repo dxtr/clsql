@@ -2,7 +2,9 @@
 
 	* sql/expressions.lisp: Fixed bug with subqueries in the where
 	clause of update-records and delete-records generating invalid
-	SQL.
+	SQL. Previously subselects in where clauses would not have enough
+	parentheses, for example: "WHERE Id IN SELECT foo_id FROM bar"
+	vs. "WHERE Id IN (SELECT foo_id FROM bar)"
 	* tests/test-syntax.lisp: Added tests for using subqueries in the
 	where clause in update-records and delete-records. Moved asserts
 	in the test-output-sql/sql-ident-table function into the standard
