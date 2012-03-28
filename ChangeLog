@@ -1,3 +1,13 @@
+2012-03-28  Russ Tyndall <russ@acceleration.net>
+
+        * sql/sequences.lisp: [A Patch FROM 2011-07-28 changed sequences.
+	They were previously prefixed with _CLSQL_SEQ_ but are now
+	suffixed with _CLSQL_SEQ. This is likely to break existing
+	implementations using the default sequence names
+
+	setting *old-sequence-names* to T, should force using the older
+	naming scheme
+
 2012-03-27  Ryan Davis  <ryan@acceleration.net>
 
 	* sql/expressions.lisp: Fixed bug with subqueries in the where
@@ -118,6 +128,14 @@
 
 	* test/: Better, more tests, better type coercion in tests and
 	throughout (%get-int)
+
+       [edit 2012-03-28 - RT]
+	* sql/sequences.lisp: Sequences were previously prefixed with
+	_CLSQL_SEQ_ but are now suffixed with _CLSQL_SEQ. This is likely
+	to break existing implementations using the default sequence names
+
+	setting *old-sequence-names* to T, should force using the older
+	naming scheme
 
 
 2011-07-16  Kevin Rosenberg <kevin@rosenberg.net>

@@ -329,6 +329,7 @@
          #:sequence-next
          #:sequence-last
          #:set-sequence-position
+         #:*old-sequence-names*
 
          ;; FDML (fdml.lisp)
          #:select

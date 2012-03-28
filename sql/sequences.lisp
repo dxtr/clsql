@@ -20,10 +20,16 @@
 
 ;;; Sequence functions
 
+(defvar *old-sequence-names* nil
+  "Should CLSQL use its old sequence naming scheme _CLSQL_SEQ_{table} instead
+   of the current scheme {table}_CLSQL_SEQ")
+
 (defun %sequence-name-to-table (sequence-name database)
   (escaped
    (combine-database-identifiers
-    (list sequence-name 'CLSQL_SEQ)
+    (if *old-sequence-names*
+        (list '_CLSQL_SEQ sequence-name)
+        (list sequence-name 'CLSQL_SEQ))
     database)))
 
 (defmethod database-create-sequence (sequence-name database)
@@ -42,16 +48,21 @@
    (concatenate 'string "DROP TABLE " (%sequence-name-to-table sequence-name database))
    database))
 
+(defun %seq-name-key ()
+  (if *old-sequence-names*
+      "_CLSQL_SEQ_"
+      "_CLSQL_SEQ"))
+
 (defun %table-name-to-sequence-name (table-name)
   ;; if this was escaped it still should be,
   ;; if it wasnt it still shouldnt-be
   (check-type table-name string)
-  (replace-all table-name "_CLSQL_SEQ" ""))
+  (replace-all table-name (%seq-name-key) ""))
 
 (defmethod database-list-sequences (database &key (owner nil))
   (declare (ignore owner))
   (mapcan #'(lambda (s)
-              (and (search "_CLSQL_SEQ" s :test #'string-equal)
+              (and (search (%seq-name-key) s :test #'string-equal)
                    (list (%table-name-to-sequence-name s))))
           (database-list-tables-and-sequences database)))
 
