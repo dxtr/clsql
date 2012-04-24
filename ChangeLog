@@ -1,3 +1,10 @@
+2012-04-24  Nathan Bird  <nathan@acceleration.net>
+
+	* sql/expressions.lisp (output-sql): on mysql CREATE TABLE
+	statements use 'ENGINE=innodb' instead of 'Type=InnoDB'. This has
+	apparently been preferred since mysql 4.1 and mysql 5.5 removed
+	type as a valid keyword.
+
 2012-03-28  Russ Tyndall <russ@acceleration.net>
 
         * sql/sequences.lisp: [A Patch FROM 2011-07-28 changed sequences.

@@ -939,7 +939,7 @@ uninclusive, and the args from that keyword to the end."
       (when (and (eq :mysql (database-underlying-type database))
                  transactions
                  (db-type-transaction-capable? :mysql database))
-        (write-string " Type=InnoDB" *sql-stream*))))
+        (write-string " ENGINE=innodb" *sql-stream*))))
   t)
 
 
