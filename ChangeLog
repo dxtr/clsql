@@ -23,13 +23,6 @@
 	ODBC connection specs, and added example code connecting to ODBC
 	databases.
 
-2012-02-22  Nathan Bird  <nathan@acceleration.net>
-
-	* db-mysql/mysql-loader.lisp (*mysql-library-candidate-names*): If
-	running on a threaded lisp try loading libmysqlclient_r (the
-	threaded build) first. from
-	http://dev.mysql.com/doc/refman/5.1/en/threaded-clients.html
-
 2012-01-05  Nathan Bird  <nathan@acceleration.net>
 
 	* db-odbc/odbc-dbi.lisp: handle sql decimal type in the same way

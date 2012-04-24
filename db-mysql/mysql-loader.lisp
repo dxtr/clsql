@@ -22,12 +22,7 @@
     "clsql_mysql"))
 
 (defvar *mysql-library-candidate-names*
-  '(
-    #+(or allegro cmu lispworks openmcl sb-thread scl) "libmysqlclient_r"
-    "libmysqlclient"
-    "libmysql"))
-
-
+  '("libmysqlclient" "libmysql"))
 
 (defvar *mysql-supporting-libraries* '("c")
   "Used only by CMU. List of library flags needed to be passed to ld to
