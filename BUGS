@@ -17,3 +17,14 @@ symbols. However, update-objects-joins fails in such cases.
 2. configure file
 Automatically generate makefiles based on the configuration of an
 end-users system
+
+3. SBCL/MySQL interaction Similar to the postgres interaction noted
+above SBCL installs its own SIGPIPE handler but the mysql library
+disables it breaking thread interrupts.  See also
+http://ccl.clozure.com/irc-logs/lisp/2012-02/lisp-2012.02.22.txt Look
+for the conversation starting at 20:03:32 between bobbysmith007 and
+pkhuong.
+
+4. Thread safety issues. While clsql attempts to be threadsafe there
+are some significant issues with some backends. See
+doc/threading-warnings.txt for more info.

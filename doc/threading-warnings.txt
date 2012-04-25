@@ -1,0 +1,77 @@
+============= suggested addition to documentation ===============
+== Threads and thread safety
+
+In a Lisp in which threading is internal, rather than done using OS threads, CLSQL should
+be threadsafe. Thus what follows will consider the case of Lisp threads also being OS 
+threads. 
+
+CLSQL attempts to be thread-safe, with important exceptions.  The database pool used by
+CONNECT and WITH-DATABASE performs appropriate locking, so that   
+it is possible to use pooled connections from different threads.   As long as database
+objects (representing connections) are not passed among threads, WITH-DATABASE 
+and CONNECT may be used by multiple threads.
+
+However, the database object contained in the VIEW-DATABASE slot of a STANDARD-DB-OBJECT 
+persists even after the database is returned to the pool.  Thus it is possible for one
+thread to read an object, return the database to pool, and then still possess a copy of
+the database inside the   VIEW-DATABASE slot.    Then UPDATE-RECORDS-FOR-INSTANCE,
+UPDATE-RECORD-FROM-SLOT, and UPDATE-RECORD-FROM-SLOTS
+(which always use the VIEW-DATABASE slot, if not NIL, rather than any supplied   
+keyword argument DATABASE) can use the database even as a second thread as 
+retrieved it from a pool, resulting in serious problems.  Automatic updating using the internal
+VIEW-DATABASE slot also may be  triggered by the global variable *DB-AUTO-SYNC*.
+
+This problem may been addressed by defining a new object class, and changing the method
+used to select the database during UPDATE-RECORDS-FOR-INSTANCE, etc.
+
+;; define a threadsafe child class of 	STANDARD-DB-OBJECT
+(defclass clsql::threadsafe-db-obj (clsql-sys:standard-db-object) nil
+  (:metaclass clsql-sys::standard-db-class))
+
+;; for this class, define threadsafe database chooser method that never uses the 
+;; internal VIEW-DATABASE slot
+(defmethod clsql-sys::choose-database-for-instance
+    ((object clsql::threadsafe-db-obj) &optional database)
+  (or database clsql-sys:*default-database*
+	(signal-no-database-error nil)))
+
+;; define a new sql database table that should be threadsafely UPDATE-able 
+(clsql-sys:def-view-class my-table  (clsql::threadsafe-db-obj)
+    (…))
+
+
+Alternatively, users may redefine *DB-POOL* and *DB-POOL-LOCK* on a per-thread basis 
+using LET before entering the thread, which will prevent any cross-thread sharing
+of connections, possibly at the cost of having more connections. [** is this a valid approach **]
+*DB-POOL-LOCK* no longer necessary, however, if connection pools are per-thread.
+
+
+==== Thread safety issues for the back-ends [** my best understanding **]
+
+* sqlite2 - sqlite2 is not threadsafe. 
+
+* sqlite3 - sqlite3 after and including 3.3.1 is threadsafe if compiled in the default manner.  According to sqlite3 documentation,
+ connections may be moved across threads if and only if  no transaction is pending and all statements have been finalized.
+
+* mysql - the mysql interface is missing initializations required for thread safety: 1) mysql_library_init() is not called in a multithreaded environment; 
+   2) mysql_thread_init() is not called on a per-thread basis; and 3) mysql_thread_end() is not called before a thread terminates.  
+     The second item may lead to corruption according to mysql documentation, and the third item
+      leads to memory leaks.    
+
+  Another issue with mysql is that it resets sigpipe in a way that renders SBCL unresponsive to interrupts, requiring additional saving and
+  restoring of the signal handler.  [** an example? **]
+
+  Nevertheless, the present version of the mysql back end often works successfully even in a threaded environment, albeit with subtle problems. 
+  
+
+* postgreSQL - is probably threadsafe [No information]
+
+* postgreSQL socket - Is probably threadsafe -- has been used for a while without any observed errors.
+
+* ODBC - the Clsql side doesn't have additional issues beyond what's documented above. But this depends on what odbc driver your using. It appears to work with unixodbc and freetds.
+
+* AODBC - no information
+
+* Oracle  - no information
+
+============= end of suggested addition to documentation ===============

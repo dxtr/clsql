@@ -26,5 +26,6 @@ DOCUMENTATION TO DO LIST
  - MYSQL 
  - SQLITE 
  - ODBC 
--  ORACLE 
+ - ORACLE
 
+6. Incorporate the threading-warnings.txt into the docs.
