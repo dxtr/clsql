@@ -4,6 +4,11 @@
 	about the current state of thread-safety in clsql. This should be
 	incorporated into the main docs at some point.
 
+2012-04-25  Russ Tyndall <russ@acceleration.net>
+	* sql/expressions.lisp (output-sql): on rendering update/insert
+	expression values, ensure that *in-subselect* is bound to T
+	so that the values will be correctly paren delimited
+
 2012-04-24  Nathan Bird  <nathan@acceleration.net>
 
 	* sql/expressions.lisp (output-sql): on mysql CREATE TABLE

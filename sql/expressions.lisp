@@ -813,7 +813,8 @@ uninclusive, and the args from that keyword to the end."
       (output-sql attributes database))
     (when values
       (write-string " VALUES " *sql-stream*)
-      (output-sql values database))
+      (let ((clsql-sys::*in-subselect* t))
+        (output-sql values database)))
     (when query
       (write-char #\Space *sql-stream*)
       (output-sql query database)))
@@ -870,7 +871,8 @@ uninclusive, and the args from that keyword to the end."
       (write-string "UPDATE " *sql-stream*)
       (output-sql table database)
       (write-string " SET " *sql-stream*)
-      (output-sql (apply #'vector (update-assignments)) database)
+      (let ((clsql-sys::*in-subselect* t))
+        (output-sql (apply #'vector (update-assignments)) database))
       (output-sql-where-clause where database)))
   t)
 
