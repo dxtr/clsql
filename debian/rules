@@ -92,7 +92,7 @@ install: build
 	dh_prep
 	dh_installdirs
 
-	dh_installdirs --all  $(clc-systems) $(clc-source)
+	dh_installdirs --all $(clc-source)
 	dh_installdirs -p $(pkg) $(lispdir-sql) etc
 	dh_installdirs -p $(pkg-uffi) $(lispdir-uffi) $(sodir-uffi)
 	dh_installdirs -p $(pkg-pg) $(lispdir-pg)

@@ -10,12 +10,12 @@ Upstream Copyright Statement
 ============================
 CLSQL is written and Copyright (c) 2002 by Kevin M. Rosenberg.
 
-CLSQL is licensed under the terms of the Lisp Lesser GNU Public
-License, known as the LLGPL.  The LLGPL consists of a preamble (see
-below) and the Lessor GNU Public License 2.1 (LGPL-2.1).  Where these
-conflict, the preamble takes precedence.  CLSQL is referenced in the
-preamble as the "LIBRARY."  The LGPL-2.1 is stored on a Debian system
-in the file /usr/share/common-licenses/LGPL-2.1.
+CLSQL is licensed under the terms of the Lisp Lesser GNU General
+Public License, known as the LLGPL.  The LLGPL consists of a preamble
+(see below) and the Lessor GNU General Public License 2.1 (LGPL-2.1).
+Where these conflict, the preamble takes precedence.  CLSQL is
+referenced in the preamble as the "LIBRARY."  The LGPL-2.1 is stored
+on a Debian system in the file /usr/share/common-licenses/LGPL-2.1.
 
 CLSQL is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
