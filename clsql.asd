@@ -38,7 +38,7 @@
 the Xanalys CommonSQL interface for Lispworks. It provides low-level
 database interfaces as well as a functional and an object
 oriented interface."
-    :version "5.3.4"
+    :version "6.2"
     :components
     ((:module sql
 	      :components
