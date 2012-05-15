@@ -128,10 +128,8 @@
   "Top-level call for generating SQL strings. Returns an SQL
   string appropriate for DATABASE which corresponds to the
   supplied lisp expression SQL-EXPR."
-  (progv '(*sql-stream*)
-      `(,(make-string-output-stream))
-    (output-sql sql-expr database)
-    (get-output-stream-string *sql-stream*)))
+  (with-output-to-string (*sql-stream*)
+    (output-sql sql-expr database)))
 
 (defmethod output-sql (expr database)
   (write-string (database-output-sql expr database) *sql-stream*)
