@@ -472,32 +472,22 @@ implementations."
         (view-class-slot-definition-mixin
          (setf (slot-value esd 'column) (compute-column-name dsd))
 
-         (setf (slot-value esd 'db-type)
-           (when (slot-boundp dsd 'db-type)
-             (delistify-dsd
-              (view-class-slot-db-type dsd))))
-
-         (setf (slot-value esd 'void-value)
-               (delistify-dsd
-                (view-class-slot-void-value dsd)))
-
-         ;; :db-kind slot value defaults to :base (store slot value in
-         ;; database)
-
-         (setf (slot-value esd 'db-kind)
-           (if (slot-boundp dsd 'db-kind)
-               (delistify-dsd (view-class-slot-db-kind dsd))
-             :base))
-
-         (setf (slot-value esd 'db-reader)
-           (when (slot-boundp dsd 'db-reader)
-             (delistify-dsd (view-class-slot-db-reader dsd))))
-         (setf (slot-value esd 'db-writer)
-           (when (slot-boundp dsd 'db-writer)
-             (delistify-dsd (view-class-slot-db-writer dsd))))
-         (setf (slot-value esd 'db-constraints)
-           (when (slot-boundp dsd 'db-constraints)
-             (delistify-dsd (view-class-slot-db-constraints dsd))))
+         (macrolet
+             ((safe-copy-value (name &optional default)
+                (let ((fn (intern (format nil "~A~A" 'view-class-slot- name ))))
+                  `(setf (slot-value esd ',name)
+                    (or (when (slot-boundp dsd ',name)
+                          (delistify-dsd (,fn dsd)))
+                     ,default)))))
+           (safe-copy-value autoincrement-sequence)
+           (safe-copy-value db-type)
+           (safe-copy-value void-value)
+           (safe-copy-value db-reader)
+           (safe-copy-value db-writer)
+           ;; :db-kind slot value defaults to :base (store slot value in
+           ;; database)
+           (safe-copy-value db-kind :base)
+           (safe-copy-value db-constraints))
 
          ;; I wonder if this slot option and the previous could be merged,
          ;; so that :base and :key remain keyword options, but :db-kind

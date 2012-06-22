@@ -1,3 +1,9 @@
+2012-06-22  Russ Tyndall  <russ@acceleration.net>
+	* sql/metaclasses.lisp: Changed compute-effective-slot-definition
+	to correctly copy the autoincrement-sequence slot to the ESD
+	previously it was being skipped (seemingly by accident).  Thanks
+	to flip214 on #lisp for the bug report
+
 2012-04-26  Kevin Rosenberg  <kevin@rosenberg.net>
 	* Version 6.2 released: thanks to all the contributors!
 
