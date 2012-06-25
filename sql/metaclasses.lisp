@@ -457,7 +457,10 @@ implementations."
 (defmethod initialize-instance :after
     ((obj view-class-direct-slot-definition)
      &key &allow-other-keys)
-  (setf (view-class-slot-column obj) (compute-column-name obj)))
+  (setf (view-class-slot-column obj) (compute-column-name obj)
+        (view-class-slot-autoincrement-sequence obj)
+        (dequote
+         (view-class-slot-autoincrement-sequence obj))))
 
 (defmethod compute-effective-slot-definition ((class standard-db-class)
                                               #+kmr-normal-cesd slot-name

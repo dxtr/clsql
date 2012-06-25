@@ -22,6 +22,11 @@
     (integer v)
     (number (truncate v))))
 
+(defun dequote (it)
+  (if (and (listp it) (eql (first it) 'quote))
+      (second it)
+      it))
+
 (defvar +whitespace-chars+
   '(#\space #\tab #\newline #\return
     ;; Tested: sbcl unicode, allegrocl, openmcl,clisp use #\no-break_space

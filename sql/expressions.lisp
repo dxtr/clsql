@@ -1116,7 +1116,7 @@ uninclusive, and the args from that keyword to the end."
 
 (defmethod database-identifier ( name  &optional database find-class-p
                                  &aux cls)
-  "A function that takes whatever you give it, recurively coerces it,
+  "A function that takes whatever you give it, recursively coerces it,
    and returns a database-identifier.
 
    (escaped-database-identifiers *any-reasonable-object*) should be called to
@@ -1139,6 +1139,7 @@ uninclusive, and the args from that keyword to the end."
             a new db-id with that string as escaped"
            (let ((s (sql-output id database)))
              (make-instance '%database-identifier :escaped s :unescaped s))))
+    (setf name (dequote name))
     (etypecase name
       (null nil)
       (string (%make-database-identifier name database))
