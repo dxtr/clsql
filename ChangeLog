@@ -1,3 +1,13 @@
+2012-07-09  Russ Tyndall  <russ@acceleration.net>
+        * sql/oodml.lisp - fixed a bug where the order by was being
+	destructively modified, causing odd caching issues when the
+	selected object was not statically known (eg unreferenced tables
+	could show up in the query if they were cached by a previous call
+	through this function.  I replaced this code with a
+	non-destructive variant which should solve this.
+
+	Thanks to Philipp Marek for the bug report
+
 2012-06-25  Russ Tyndall  <russ@acceleration.net>
 	* sql/util.lisp, sql/metaclasses.lisp
 	Dequote database-identifiers if needed (passed a quoted symbol)
