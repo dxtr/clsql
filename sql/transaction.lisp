@@ -41,6 +41,8 @@ is called on DATABASE which defaults to *DEFAULT-DATABASE*."
     (setf (transaction database)
           (make-instance 'transaction :previous-autocommit
                          (database-autocommit database))))
+  ;; TODO: database-autocommit might get lost in some scenarios
+  ;; when pooling connections
   (setf (database-autocommit database) nil)
   (when (= (incf (transaction-level database)) 1)
     (let ((transaction (transaction database)))
@@ -52,7 +54,7 @@ is called on DATABASE which defaults to *DEFAULT-DATABASE*."
         (:mssql (execute-command "BEGIN TRANSACTION" :database database))
         (t (execute-command "BEGIN" :database database))))))
 
-;;ODBC should potentially be using it's scheme for transactions:
+;;ODBC should potentially be using the following scheme for transactions:
 ;; turn off autocommit for begin. then use sqlendtran (or maybe sqltransact)
 ;; whatever is appropriate for this version of odbc.
 (defmethod database-commit-transaction ((database database))
