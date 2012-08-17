@@ -1,3 +1,8 @@
+2012-08-17  Russ Tyndall  <russ@acceleration.net>
+	* db-postgresql-socket3/package.lisp - shadow
+	postgresql-notification for compatibility with new
+	cl-postgres (Thanks Zach)
+
 2012-07-09  Russ Tyndall  <russ@acceleration.net>
         * sql/oodml.lisp - fixed a bug where the order by was being
 	destructively modified, causing odd caching issues when the
