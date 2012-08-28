@@ -93,7 +93,7 @@ is called on DATABASE which defaults to *DEFAULT-DATABASE*."
              (not (transaction-status (transaction database))))
     (setf (transaction-status (transaction database)) :committed)))
 
-(defmacro with-transaction ((&key (database '*default-database*)) &rest body)
+(defmacro with-transaction ((&key (database '*default-database*)) &body body)
   "Starts a transaction in the database specified by DATABASE,
 which is *DEFAULT-DATABASE* by default, and executes BODY within
 that transaction. If BODY aborts or throws, DATABASE is rolled
