@@ -289,7 +289,10 @@
 ;;;;
 ;;;; wrapper functions.
 ;;;;
-(defun sqlite3-open (db-name &optional (mode 0))
+(defun sqlite3-open (db &optional (mode 0)
+                     &aux (db-name (etypecase db
+                                     (pathname (namestring db))
+                                     (string db))))
   (declare (ignore mode) (type string db-name))
   (let ((dbp (allocate-foreign-object 'sqlite3-db)))
     (declare (type sqlite3-db-ptr-type dbp))

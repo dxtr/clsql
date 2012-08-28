@@ -1,3 +1,8 @@
+2012-08-28  Ryan Davis <ryan@acceleration.net>
+	* db-sqlite3/sqlite3-api.lisp - allow pathnames in the connection
+	settings, so '("/db/my.sqlite") and '(#P"/db/my.sqlite") are
+	equivalent. Updated the docs to match.
+
 2012-08-17  Russ Tyndall  <russ@acceleration.net>
 	* db-postgresql-socket3/package.lisp - shadow
 	postgresql-notification for compatibility with new

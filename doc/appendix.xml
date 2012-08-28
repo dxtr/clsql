@@ -600,8 +600,8 @@ This file can contain forms to set site-specific paths as well as change
 	    <varlistentry>
 	      <term><parameter>filename</parameter></term>
 	      <listitem>
-		<para>String representing the filename of the &sqlite;
-		database file.</para>
+		<para>String or pathname representing the filename of
+		the &sqlite; database file.</para>
 	      </listitem>
 	    </varlistentry>
 	  </variablelist>
