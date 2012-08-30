@@ -31,7 +31,7 @@
 (defmethod database-name-from-spec (connection-spec
                                     (database-type (eql :sqlite3)))
   (check-sqlite3-connection-spec connection-spec)
-  (first connection-spec))
+  (princ-to-string (first connection-spec)))
 
 (defmethod database-connect (connection-spec (database-type (eql :sqlite3)))
   (check-sqlite3-connection-spec connection-spec)
