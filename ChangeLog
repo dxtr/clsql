@@ -1,3 +1,11 @@
+2012-09-04  Russ Tyndall <russ@acceleration.net>
+	* sql/expressions.lisp - Try to respect the casing of symbols
+	where it seems intentional (ie: is not default). This should fix
+	a failing test case, and I think behaves more understandibly.
+
+	If you specify a casing '|Foo Bar| lets treat that a string "Foo Bar"
+	and output it escaped
+
 2012-08-28  Ryan Davis <ryan@acceleration.net>
 	* db-sqlite3/sqlite3-api.lisp - allow pathnames in the connection
 	settings, so '("/db/my.sqlite") and '(#P"/db/my.sqlite") are

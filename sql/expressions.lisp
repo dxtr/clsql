@@ -68,6 +68,14 @@
                             #\^ #\& #\* #\| #\( #\) #\- #\+ #\< #\>
                             #\{ #\}))))
 
+(defun special-cased-symbol-p (sym)
+  "Should the symbols case be preserved, or should we convert to default casing"
+  (let ((name (symbol-name sym)))
+    (case (readtable-case *readtable*)
+      (:upcase (not (string= (string-upcase name) name)))
+      (:downcase (not (string= (string-downcase name) name)))
+      (t t))))
+
 (defun %make-database-identifier (inp &optional database)
   "We want to quote an identifier if it came to us as a string or if it has special characters
    in it."
@@ -88,8 +96,12 @@
       (symbol
        (let ((s (sql-escape inp)))
          (if (and (not (eql '* inp)) (special-char-p s))
-             (%escape-identifier (convert-to-db-default-case s database) inp)
-             (make-instance '%database-identifier :escaped s :unescaped inp)))))))
+             (%escape-identifier
+              (if (special-cased-symbol-p inp)
+                  s
+                  (convert-to-db-default-case s database)) inp)
+             (make-instance '%database-identifier :escaped s :unescaped inp))
+         )))))
 
 (defun combine-database-identifiers (ids &optional (database clsql-sys:*default-database*)
                                      &aux res all-sym? pkg)
