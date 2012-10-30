@@ -1,3 +1,7 @@
+2012-10-30  Russ Tyndall <russ@acceleration.net>
+	* sql/command-object.lisp - added dates/times to the parameter value
+	coersion and pulled this into a new generic prepare-sql-parameter
+
 2012-09-04  Kevin Rosenberg  <kevin@rosenberg.net>
 	* Version 6.3 released
 
