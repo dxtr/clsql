@@ -16,6 +16,11 @@
 
 (in-package #:clsql-sys)
 
+(defmacro defaulting (&rest place-value-plist)
+  `(progn
+    ,@(loop for (place value . rest) on place-value-plist by #'cddr
+            collect `(unless ,place (setf ,place ,value)))))
+
 (defun %get-int (v)
   (etypecase v
     (string (parse-integer v :junk-allowed t))
@@ -437,3 +442,27 @@ removed. keys are searched with #'MEMBER"
       #+sbcl :weakness #+sbcl :value
       ,@args)
     ))
+
+(defun to-slot-name (slot)
+  "try to turn what we got representing the slot into a slot name"
+  (etypecase slot
+    (symbol slot)
+    (slot-definition (slot-definition-name slot))))
+
+(defun to-class (it)
+  (etypecase it
+    (class it)
+    (symbol (find-class it))
+    (standard-object (class-of it))))
+
+(defun easy-slot-value (obj slot)
+  "like slot-value except it accepts slot-names or defs
+   and returns nil when the slot is unbound"
+  (let ((n (to-slot-name slot)))
+    (when (and obj (slot-boundp obj n))
+      (slot-value obj n))))
+
+(defun (setf easy-slot-value) (new obj slot)
+  "like slot-value except it accepts slot-names or defs"
+  (setf (slot-value obj (to-slot-name slot)) new))
+
