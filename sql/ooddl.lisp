@@ -31,28 +31,28 @@
 (defvar *db-initializing* nil)
 
 (defmethod slot-value-using-class ((class standard-db-class) instance slot-def)
+  "When a slot is unbound but should contain a join object or a value from a
+   normalized view-class, then retrieve and set those slots, so the value can
+   be returned"
   (declare (optimize (speed 3)))
   (unless *db-deserializing*
     (let* ((slot-name (%svuc-slot-name slot-def))
-           (slot-object (%svuc-slot-object slot-def class))
-           (slot-kind (view-class-slot-db-kind slot-object)))
-      (if (and (eql slot-kind :join)
-               (not (slot-boundp instance slot-name)))
-          (let ((*db-deserializing* t))
-            (if (view-database instance)
-                (setf (slot-value instance slot-name)
-                      (fault-join-slot class instance slot-object))
-                (setf (slot-value instance slot-name) nil)))
-          (when (and (normalizedp class)
-                     (not (member slot-name
-                                  (mapcar #'(lambda (esd) (slot-definition-name esd))
-                                          (ordered-class-direct-slots class))))
-                     (not (slot-boundp instance slot-name)))
-            (let ((*db-deserializing* t))
-              (if (view-database instance)
-                  (setf (slot-value instance slot-name)
-                        (fault-join-normalized-slot class instance slot-object))
-                  (setf (slot-value instance slot-name) nil)))))))
+           (slot-object (%svuc-slot-object slot-def class)))
+      (unless (slot-boundp instance slot-name)
+        (let ((*db-deserializing* t))
+          (cond
+            ((join-slot-p slot-def)
+             (setf (slot-value instance slot-name)
+                   (if (view-database instance)
+                       (fault-join-slot class instance slot-object)
+                       ;; TODO: you could in theory get a join object even if
+                       ;; its joined-to object was not in the database
+                       nil
+                       )))
+            ((not-direct-normalized-slot-p class slot-def)
+             (if (view-database instance)
+                 (update-fault-join-normalized-slot class instance slot-def)
+                 (setf (slot-value instance slot-name) nil))))))))
   (call-next-method))
 
 (defmethod (setf slot-value-using-class) (new-value (class standard-db-class)

@@ -12,39 +12,38 @@
 
 (in-package #:clsql-sys)
 
+(defun find-normalized-key (obj)
+  (find-slot-if obj #'key-slot-p T T))
+
+(defun normalized-key-value (obj)
+  "Normalized classes share a single key for all their key slots"
+  (when (normalizedp (class-of obj))
+    (easy-slot-value obj (find-normalized-key obj))))
 
 (defun key-qualifier-for-instance (obj &key (database *default-database*) this-class)
   (let* ((obj-class (or this-class (class-of obj)))
-         (tb (view-table obj-class)))
-    (flet ((qfk (k)
-             (sql-operation '==
-                            (sql-expression :attribute
-                                            (database-identifier k database)
-                                            :table tb)
-                            (db-value-from-slot
-                             k
-                             (slot-value obj (slot-definition-name k))
-                             database))))
-      (let* ((keys (keyslots-for-class obj-class))
-             (keyxprs (mapcar #'qfk (reverse keys))))
-        (cond
-          ((= (length keyxprs) 0) nil)
-          ((= (length keyxprs) 1) (car keyxprs))
-          ((> (length keyxprs) 1) (apply #'sql-operation 'and keyxprs)))))))
+         (keys (keyslots-for-class obj-class))
+         (normal-db-value (normalized-key-value obj)))
+    (when keys
+      (labels ((db-value (k)
+                 (or normal-db-value
+                     (db-value-from-slot
+                      k
+                      (easy-slot-value obj k)
+                      database)))
+               (key-equal-exp (k)
+                 (sql-operation '== (generate-attribute-reference obj-class k database)
+                                (db-value k))))
+        (clsql-ands (mapcar #'key-equal-exp keys))))))
 
-;;
-;; Function used by 'generate-selection-list'
-;;
+(defun generate-attribute-reference (vclass slotdef &optional (database *default-database*))
+  "Turns key class and slot-def into a sql-expression representing the
+   table and column it comes from
 
-(defun generate-attribute-reference (vclass slotdef)
-  (cond
-    ((eq (view-class-slot-db-kind slotdef) :base)
-     (sql-expression :attribute (database-identifier slotdef nil)
-                     :table (database-identifier vclass nil)))
-    ((eq (view-class-slot-db-kind slotdef) :key)
-     (sql-expression :attribute (database-identifier slotdef nil)
-                     :table (database-identifier vclass nil)))
-    (t nil)))
+   used by things like generate-selection-list, update-slot-from-record"
+  (when (key-or-base-slot-p slotdef)
+    (sql-expression :attribute (database-identifier slotdef database)
+                    :table (database-identifier vclass database))))
 
 ;;
 ;; Function used by 'find-all'
@@ -193,6 +192,18 @@
 (defmethod view-table ((o class-and-slots))
   "get the view-table of the view-class of o"
   (view-table (view-class o)))
+
+(defmethod view-table-exp ((o class-and-slots))
+  (sql-expression :table (view-table o)))
+
+(defmethod view-table-exp ((o standard-db-class))
+  (sql-expression :table (view-table o)))
+
+(defmethod attribute-references ((o class-and-slots))
+  (loop
+    with class = (view-class o)
+    for sd in (slot-defs o)
+    collect (generate-attribute-reference class sd)))
 
 (defmethod attribute-value-pairs ((def class-and-slots) (o standard-db-object)
                                   database)
@@ -406,28 +417,34 @@
             (pres)
             (t nil)))))
 
+
+(defmethod get-slot-value-from-record ((instance standard-db-object)
+                                       slot &key (database *default-database*))
+  (let* ((class-and-slot
+           (first
+            (view-classes-and-slots-by-name instance slot)))
+         (view-class (view-class class-and-slot))
+         (slot-def (first (slot-defs class-and-slot)))
+         (vd (choose-database-for-instance instance database))
+         (att-ref (first (attribute-references class-and-slot)))
+         (res (first
+               (select att-ref
+                 :from (view-table-exp class-and-slot)
+                 :where (key-qualifier-for-instance
+                         instance
+                         :database vd
+                         :this-class view-class)
+                 :result-types nil
+                 :flatp T))))
+    (values res slot-def)))
+
 (defmethod update-slot-from-record ((instance standard-db-object)
                                     slot &key (database *default-database*))
-  (let* ((view-class (find-class (class-name (class-of instance))))
-         (slot-def (slotdef-for-slot-with-class slot view-class)))
-    (when (normalizedp view-class)
-      ;; If it's normalized, find the class that actually contains
-      ;; the slot that's tied to the db
-      (setf view-class
-            (do ((this-class view-class
-                             (car (class-direct-superclasses this-class))))
-                ((direct-normalized-slot-p this-class slot)
-                 this-class))))
-    (let* ((view-table (sql-expression :table (view-table view-class)))
-           (vd (choose-database-for-instance instance database))
-           (view-qual (key-qualifier-for-instance instance :database vd
-                                                           :this-class view-class))
-           (att-ref (generate-attribute-reference view-class slot-def))
-           (res (select att-ref :from  view-table :where view-qual
-                                                  :result-types nil)))
-      (when res
-	(setf (slot-value instance 'view-database) vd)
-        (get-slot-values-from-view instance (list slot-def) (car res))))))
+  (multiple-value-bind (res slot-def)
+      (get-slot-value-from-record instance slot :database database)
+    (let ((vd (choose-database-for-instance instance database)))
+      (setf (slot-value instance 'view-database) vd)
+      (update-slot-from-db-value instance slot-def res))))
 
 
 (defvar +no-slot-value+ '+no-slot-value+)
@@ -940,65 +957,29 @@ maximum of MAX-LEN instances updated in each query."
         (select jc :where jq :flatp t :result-types nil
                 :database (choose-database-for-instance object))))))
 
+
+
 (defun fault-join-slot (class object slot-def)
   (let* ((dbi (view-class-slot-db-info slot-def))
-         (ts (gethash :target-slot dbi)))
-    (if (and ts (gethash :set dbi))
+         (ts (gethash :target-slot dbi))
+         (dbi-set (gethash :set dbi)))
+    (if (and ts dbi-set)
         (fault-join-target-slot class object slot-def)
         (let ((res (fault-join-slot-raw class object slot-def)))
           (when res
             (cond
-              ((and ts (not (gethash :set dbi)))
+              ((and ts (not dbi-set))
                (mapcar (lambda (obj) (slot-value obj ts)) res))
-              ((and (not ts) (not (gethash :set dbi)))
+              ((and (not ts) (not dbi-set))
                (car res))
-              ((and (not ts) (gethash :set dbi))
+              ((and (not ts) dbi-set)
                res)))))))
 
-;;;; Should we not return the whole result, instead of only
-;;;; the one slot-value? We get all the values from the db
-;;;; anyway, so?
-(defun fault-join-normalized-slot (class object slot-def)
-  (labels ((getsc (this-class)
-             (let ((sc (car (class-direct-superclasses this-class))))
-               (if (key-slots sc)
-                   sc
-                   (getsc sc)))))
-    (let* ((sc (getsc class))
-           (hk (slot-definition-name (car (key-slots class))))
-           (fk (slot-definition-name (car (key-slots sc)))))
-      (let ((jq (sql-operation '==
-                               (typecase fk
-                                 (symbol
-                                  (sql-expression
-                                   :attribute
-                                   (database-identifier
-                                    (slotdef-for-slot-with-class fk sc) nil)
-                                   :table (view-table sc)))
-                                 (t fk))
-                               (typecase hk
-                                 (symbol
-                                  (slot-value object hk))
-                                 (t hk)))))
-
-        ;; Caching nil in next select, because in normalized mode
-        ;; records can be changed through other instances (children,
-        ;; parents) so changes possibly won't be noticed
-        (let ((res (car (select (class-name sc) :where jq
-                                                :flatp t :result-types nil
-                                                :caching nil
-                                                :database (choose-database-for-instance object))))
-              (slot-name (slot-definition-name slot-def)))
-
-          ;; If current class is normalized and wanted slot is not
-          ;; a direct member, recurse up
-          (if (and (normalizedp class)
-                   (not (member slot-name
-                                (mapcar #'(lambda (esd) (slot-definition-name esd))
-                                        (ordered-class-direct-slots class))))
-                   (not (slot-boundp res slot-name)))
-              (fault-join-normalized-slot sc res slot-def)
-              (slot-value res slot-name)))))) )
+(defun update-fault-join-normalized-slot (class object slot-def)
+  (if (and (normalizedp class) (key-slot-p slot-def))
+      (setf (easy-slot-value object slot-def)
+            (normalized-key-value object))
+      (update-slot-from-record object slot-def)))
 
 (defun join-qualifier (class object slot-def)
   (declare (ignore class))
