@@ -219,7 +219,7 @@
                "Find the best class to associate with the slot. If it is
                 normalized then it needs to be a direct slot otherwise it just
                 needs to be on the class."
-               (let ((sd (find-class-slot-by-name class slot normalizedp)))
+               (let ((sd (find-slot-by-name class slot normalizedp nil)))
                  (if sd
                      ;;we found it directly or it's (not normalized)
                      (pushnew sd (slot-defs (get-c&s-obj class)))
@@ -310,10 +310,7 @@
     ((obj standard-db-object) slot &key (database *default-database*))
   (update-record-from-slots obj slot :database database))
 
-(defun %slot-storedp (slot-def)
-  "Whether or not a slot should be stored in the database based on its db-kind
-   and whether it is bound"
-  (member (view-class-slot-db-kind slot-def) '(:base :key)))
+
 
 (defmethod view-classes-and-storable-slots-for-instance ((obj standard-db-object))
   "Get a list of all the tables we need to update and the slots on them
@@ -327,7 +324,7 @@
          rtns)
     (labels ((storable-slots (class)
                (loop for sd in (slots-for-possibly-normalized-class class)
-                     when (%slot-storedp sd)
+                     when (key-or-base-slot-p sd)
                      collect sd))
              (get-classes-and-slots (class &aux (normalizedp (normalizedp class)))
                (let ((slots (storable-slots class)))
