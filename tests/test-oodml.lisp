@@ -241,15 +241,15 @@
 
 (deftest :oodm/retrieval/4
     (with-dataset *ds-employees*
-      (mapcar #'(lambda (ea) (typep (slot-value ea 'address) 'address))
+      (every #'(lambda (ea) (typep (slot-value ea 'address) 'address))
 	      (select 'employee-address :flatp t :caching nil)))
-  (t t t t t))
+  t)
 
 (deftest :oodm/retrieval/5
     (with-dataset *ds-employees*
-      (mapcar #'(lambda (ea) (typep (slot-value ea 'address) 'address))
-	      (select 'deferred-employee-address :flatp t :caching nil)))
-  (t t t t t))
+      (every #'(lambda (ea) (typep (slot-value ea 'address) 'address))
+             (select 'deferred-employee-address :flatp t :caching nil)))
+  t)
 
 (deftest :oodm/retrieval/6
     (with-dataset *ds-employees*
@@ -267,13 +267,13 @@
     (with-dataset *ds-employees*
       (mapcar #'(lambda (ea) (slot-value (slot-value ea 'address) 'street-number))
 	      (select 'employee-address :flatp t :order-by [aaddressid] :caching nil)))
-  (10 10 nil nil nil))
+  (10 10 nil nil nil nil))
 
 (deftest :oodm/retrieval/9
     (with-dataset *ds-employees*
       (mapcar #'(lambda (ea) (slot-value (slot-value ea 'address) 'street-number))
 	      (select 'deferred-employee-address :flatp t :order-by [aaddressid] :caching nil)))
-  (10 10 nil nil nil))
+  (10 10 nil nil nil nil))
 
 ;; tests update-records-from-instance
 (deftest :oodml/update-records/1
@@ -836,7 +836,7 @@
 
 (deftest :oodml/cache/1
     (with-dataset *ds-employees*
-      (progn
+      (let ((*default-caching* t))
 	(setf (clsql-sys:record-caches *default-database*) nil)
 	(let ((employees (select 'employee)))
 	  (every #'(lambda (a b) (eq a b))
@@ -845,19 +845,22 @@
 
 (deftest :oodml/cache/2
     (with-dataset *ds-employees*
-      (let ((employees (select 'employee)))
+      (let* ((*default-caching* t)
+             (employees (select 'employee)))
 	(equal employees (select 'employee :flatp t))))
   nil)
 
 (deftest :oodml/refresh/1
     (with-dataset *ds-employees*
-      (let ((addresses (select 'address)))
+      (let* ((clsql-sys:*default-caching* t)
+             (addresses (select 'address)))
 	(equal addresses (select 'address :refresh t))))
   t)
 
 (deftest :oodml/refresh/2
     (with-dataset *ds-employees*
-      (let* ((addresses (select 'address :order-by [addressid] :flatp t :refresh t))
+      (let* ((clsql-sys:*default-caching* t)
+             (addresses (select 'address :order-by [addressid] :flatp t :refresh t))
 	     (city (slot-value (car addresses) 'city)))
 	(clsql:update-records [addr]
 			      :av-pairs '((city_field "A new city"))
@@ -875,7 +878,8 @@
 
 (deftest :oodml/refresh/3
     (with-dataset *ds-employees*
-      (let* ((addresses (select 'address :order-by [addressid] :flatp t)))
+      (let* ((clsql-sys:*default-caching* t)
+             (addresses (select 'address :order-by [addressid] :flatp t)))
 	(values
 	  (equal addresses (select 'address :refresh t :flatp t))
 	  (equal addresses (select 'address :flatp t)))))
@@ -883,38 +887,56 @@
 
 (deftest :oodml/refresh/4
     (with-dataset *ds-employees*
-      (let* ((addresses (select 'address :order-by [addressid] :flatp t :refresh t))
+      (let* ((clsql-sys:*default-caching* t)
+             (addresses (select 'address :order-by [addressid] :flatp t :refresh t))
 	     (*db-auto-sync* t))
 	(make-instance 'address :addressid 1000 :city "A new address city")
 	(let ((new-addresses (select 'address :order-by [addressid] :flatp t :refresh t)))
-	  (delete-records :from [addr] :where [= [addressid] 1000])
 	  (values
 	    (length addresses)
 	    (length new-addresses)
 	    (eq (first addresses) (first new-addresses))
 	    (eq (second addresses) (second new-addresses))))))
-  2 3 t t)
+  3 4 t t)
 
 
-(deftest :oodml/uoj/1
+(deftest :oodml/uoj/full-set
     (with-dataset *ds-employees*
       (progn
-	(let* ((dea-list (select 'deferred-employee-address :caching nil :order-by ["ea_join" aaddressid]
-				 :flatp t))
+	(let* ((dea-list (select 'deferred-employee-address
+                           :caching nil :order-by ["ea_join" aaddressid]
+                           :flatp t))
 	       (dea-list-copy (copy-seq dea-list))
 	       (initially-unbound (every #'(lambda (dea) (not (slot-boundp dea 'address))) dea-list)))
-	  (update-objects-joins dea-list)
+	  (update-objects-joins dea-list :slots 'address :max-len nil)
 	  (values
 	    initially-unbound
 	    (equal dea-list dea-list-copy)
 	    (every #'(lambda (dea) (slot-boundp dea 'address)) dea-list)
 	    (every #'(lambda (dea) (typep (slot-value dea 'address) 'address)) dea-list)
 	    (mapcar #'(lambda (dea) (slot-value (slot-value dea 'address) 'addressid)) dea-list)))))
-  t t t t (1 1 2 2 2))
+  t t t t (1 1 2 2 2 3))
+
+(deftest :oodml/uoj/batched
+    (with-dataset *ds-employees*
+      (progn
+        (let* ((dea-list (select 'deferred-employee-address
+                           :caching nil :order-by ["ea_join" aaddressid]
+                           :flatp t))
+               (dea-list-copy (copy-seq dea-list))
+               (initially-unbound (every #'(lambda (dea) (not (slot-boundp dea 'address))) dea-list)))
+          (update-objects-joins dea-list :slots 'address :max-len 2)
+          (values
+           initially-unbound
+           (equal dea-list dea-list-copy)
+           (every #'(lambda (dea) (slot-boundp dea 'address)) dea-list)
+           (every #'(lambda (dea) (typep (slot-value dea 'address) 'address)) dea-list)
+           (mapcar #'(lambda (dea) (slot-value (slot-value dea 'address) 'addressid)) dea-list)))))
+  t t t t (1 1 2 2 2 3))
 
 ;; update-object-joins needs to be fixed for multiple keys
 #+ignore
-(deftest :oodml/uoj/2
+(deftest :oodml/uoj/multi-key
     (progn
       (clsql:update-objects-joins (list company1))
       (mapcar #'(lambda (e)
@@ -1155,4 +1177,5 @@
 	  (clsql:update-record-from-slot emp1 'height))))
   t)
 ))
+
 

@@ -21,6 +21,15 @@
     ,@(loop for (place value . rest) on place-value-plist by #'cddr
             collect `(unless ,place (setf ,place ,value)))))
 
+(defmacro pop-n (place &optional (n 1))
+  "pops n items off of a list in place and returns their values in a new list
+
+   if n > the length of the list in place, then we return the full list,
+     setting the place to nil"
+  `(loop repeat ,n
+    while ,place
+    collect (pop ,place)))
+
 (defun %get-int (v)
   (etypecase v
     (string (parse-integer v :junk-allowed t))

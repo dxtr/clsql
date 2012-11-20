@@ -102,6 +102,21 @@
       (slot-value (employee-manager employee2) 'last-name))
   "Lenin")
 
+(deftest :ooddl/join/4
+    (with-dataset *ds-employees*
+      (values
+       (length (employee-addresses employee10))
+       ;; add an address
+       (let ((*db-auto-sync* T))
+         (make-instance 'address :addressid 50)
+         (make-instance 'employee-address :emplid 10 :addressid 50)
+         ;; again
+         (length (employee-addresses employee10)))
+       (progn
+         (update-objects-joins (list employee10) :slots '(addresses))
+         (length (employee-addresses employee10)))))
+  0 0 1)
+
 (deftest :ooddl/big/1
     ;;tests that we can create-view-from-class with a bigint slot,
     ;; and stick a value in there.

@@ -1,3 +1,14 @@
+2012-11-20  Nathan Bird  <nathan@acceleration.net>
+
+	* update-objects-joins - changed the default of slot from t (which
+	  used to mean :deferred) to :immediate (to match the default
+	  behavior of other parts of the system).  It also seemed like a bad
+	  default to pull all the slots that were explicitly specified to be
+	  not pulled by default.  This function now accepts more special
+	  values (:immediate, :deferred, :all, or a list of slots).  To get
+	  the old behavior call with :slots :deferred.
+
+
 2012-10-30  Russ Tyndall <russ@acceleration.net>
 	* sql/command-object.lisp - added dates/times to the parameter value
 	coersion and pulled this into a new generic prepare-sql-parameter

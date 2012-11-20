@@ -14,11 +14,13 @@
 (defparameter employee10 nil)
 (defparameter address1 nil)
 (defparameter address2 nil)
+(defparameter address3 nil)
 (defparameter employee-address1 nil)
 (defparameter employee-address2 nil)
 (defparameter employee-address3 nil)
 (defparameter employee-address4 nil)
 (defparameter employee-address5 nil)
+(defparameter employee-address6 nil)
 
 (defclass thing ()
   ((extraterrestrial :initform nil :initarg :extraterrestrial)))
@@ -318,6 +320,8 @@
                                   :postal-code 123)
           address2 (make-instance 'address
                                   :addressid 2)
+          address3 (make-instance 'address
+                                  :addressid 3)
           employee-address1 (make-instance 'employee-address
                                            :emplid 1
                                            :addressid 1
@@ -336,7 +340,10 @@
                                            :verified nil)
           employee-address5 (make-instance 'employee-address
                                            :emplid 3
-                                           :addressid 2)))
+                                           :addressid 2)
+          employee-address6 (make-instance 'employee-address
+                                           :emplid 4
+                                           :addressid 3)))
 
   ;; sleep to ensure birthdays are no longer at current time
   ;(sleep 1) ;want to find the test that depends on it, put the sleep there.

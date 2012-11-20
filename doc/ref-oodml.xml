@@ -972,9 +972,11 @@ Details for Vladimir Lenin have been updated from the database.
 	<varlistentry>
 	  <term><parameter>slots</parameter></term>
 	  <listitem>
-	    <para>
-              A list of slot names in <parameter>object</parameter> or &t;. 
-            </para>
+	    <para>* :immediate (default) - refresh join slots with :retrieval :immediate</para>
+            <para>* :deferred - refresh join slots created with :retrieval :deferred</para>
+            <para>* :all,t - refresh all join slots regardless of :retrieval</para>
+            <para>* list of symbols - which explicit slots to refresh</para>
+            <para>* a single symobl - what slot to refresh</para>
 	  </listitem>
 	</varlistentry>
 	<varlistentry>
@@ -1000,6 +1002,9 @@ Details for Vladimir Lenin have been updated from the database.
 	    <para>
               A non-negative integer or &nil; defaulting to
               <symbol>*default-update-objects-max-len*</symbol>.
+              When non-nil this is essentially a batch size for the max number of objects
+              to query from the database at a time.  If we need more than max-len
+              we loop till we have all the objects
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -1007,25 +1012,15 @@ Details for Vladimir Lenin have been updated from the database.
     </refsect1>
     <refsect1>
       <title>Description</title>
-      <para>Updates from the records of the appropriate database
-      tables the join slots specified by <parameter>slots</parameter>
-      in the supplied list of <glossterm linkend="gloss-view-class">View
-      Class</glossterm> instances
-      <parameter>objects</parameter>. <parameter>slots</parameter>
-      when &t; means that all join slots with
-      <symbol>:retrieval</symbol> <symbol>:immediate</symbol> are
-      updated. <parameter>class-name</parameter> is used to specify
-      the <glossterm linkend="gloss-view-class">View Class</glossterm> of
-      all instance in <parameter>objects</parameter>, when &nil; then
-      the class of the first instance in
-      <parameter>objects</parameter> is
-      used. <parameter>force-p</parameter> when &t; means that all
-      join slots are updated whereas a value of &nil; means that only
-      unbound join slots are updated. <parameter>max-len</parameter>
-      when non-nil specifies that
-      <function>update-object-joins</function> may issue multiple
-      database queries with a maximum of
-      <parameter>max-len</parameter> instances updated in each query.
+      <para>
+        Updates from the records of the appropriate database tables the join slots
+        specified by SLOTS in the supplied list of 
+        <glossterm linkend="gloss-view-class">View Class</glossterm> instances OBJECTS.
+        
+        A simpler method of causing a join-slot to be requeried is to set it to
+        unbound, then request it again.  This function has efficiency gains where
+        join-objects are shared among the `objects` (querying all join-objects,
+        then attaching them appropriately to each of the `objects`)
       </para>
     </refsect1>
     <refsect1>
