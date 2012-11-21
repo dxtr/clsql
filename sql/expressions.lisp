@@ -249,6 +249,10 @@
   (declare (ignore sql))
   nil)
 
+(defmethod collect-table-refs ((sql list))
+  (loop for i in sql
+        appending (listify (collect-table-refs i))))
+
 (defmethod collect-table-refs ((sql sql-ident-attribute))
   (let ((qual (slot-value sql 'qualifier)))
     (when qual
@@ -285,6 +289,9 @@
   (with-slots (alias name)
     sql
     `(make-instance 'sql-ident-table :name ',name :table-alias ',alias)))
+
+(defmethod collect-table-refs ((sql sql-ident-table))
+  (list sql))
 
 (defmethod output-sql ((expr sql-ident-table) database)
   (with-slots (name alias) expr
