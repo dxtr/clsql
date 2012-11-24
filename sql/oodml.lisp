@@ -346,7 +346,7 @@
   "Makes sure that if a class has unfilled slots that claim to have a default,
    that we retrieve those defaults from the database
 
-   TODO: use update slots-from-record instead to batch this!"
+   TODO: use update-slots-from-record (doesnt exist) instead to batch this!"
   (loop for class-and-slots in (listify classes-and-slots)
         do (loop for slot in (slot-defs class-and-slots)
                  do (when (and (slot-has-default-p slot)

@@ -1,3 +1,42 @@
+2012-11-20 Russ Tyndall <russ@acceleration.net>
+	## Large refactoring of sql/oodml.lisp and surrounding code
+	* cleaned up update-records-from-* to utilize a single codepath
+	  previously there was much duplicate code
+	* tried to further unify direct/effective slot-defs
+	* cleaned up much of the normalized classes code to be more
+	  consistent in how it operated, and the code it used (less
+	  copy/paste more functions)
+	* tried to standardize iteration a bit, previously almost all
+	  of the iteration constructs in CL were used. Tried to
+	  standardize on loop for readability / cohesiveness
+	* made functions to more easily look up particular slots, since
+	  this was being done differently in each function
+	* added more doc-strings and updated documentation about
+	  normalized classes
+	* inner-joins that are referenced in where clauses are no longer
+	  added to the select table list (since they are also referenced
+	  in the join position and this led to sql errors)
+	* collect-table-references methods added for sql-ident-table and
+	  list
+
+	## Semantic changes
+	* disallow where-less updates from objects (ie cannot call
+          update-records-from* with a keyless object)
+	* ordered-class-direct-slots now returns direct-slot-definitions
+	  instead of effective-slot-definitions (as per name)
+	* direct-slot-definitions now contain the db-info hash table (same
+	  as effective slots)
+	* removed this-class arg from update-instance-from-records - used to
+	  be used for normalized code, no longer needed for that.
+	* find-all - bug fixes in table references, previously where clauses
+	  surrounded by a list would have none of their references added to
+	  the select. This was being exploited by certain code paths.  Now
+	  all where clauses are searched
+	  - No longer includes order-by and distinct as columns in the select
+	    list.  The values seemed to be ignored in every code path and distinct
+	    seemed to be intended to be used as a boolean anyway
+
+
 2012-11-20  Nathan Bird  <nathan@acceleration.net>
 
 	* update-objects-joins - changed the default of slot from t (which

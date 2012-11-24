@@ -17,6 +17,8 @@
 (in-package #:clsql-sys)
 
 (defmacro defaulting (&rest place-value-plist)
+  "for places and values (as an &rest plist)
+   if place-n is null set it to value-n"
   `(progn
     ,@(loop for (place value . rest) on place-value-plist by #'cddr
             collect `(unless ,place (setf ,place ,value)))))

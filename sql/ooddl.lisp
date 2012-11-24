@@ -57,6 +57,7 @@
 
 (defmethod (setf slot-value-using-class) (new-value (class standard-db-class)
                                           instance slot-def)
+  "Handle auto syncing values to the database if *db-auto-sync* is t"
   (declare (ignore new-value))
   (let* ((slot-name (%svuc-slot-name slot-def))
          (slot-object (%svuc-slot-object slot-def class))
