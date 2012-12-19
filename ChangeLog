@@ -1,3 +1,6 @@
+2012-12-19 Kevin Rosenberg <kevin@rosenberg.net>
+	* Version 6.4
+
 2012-11-20 Russ Tyndall <russ@acceleration.net>
 	## Large refactoring of sql/oodml.lisp and surrounding code
 	* cleaned up update-records-from-* to utilize a single codepath
