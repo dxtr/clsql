@@ -308,7 +308,7 @@
    the public api"
   (update-record-from-slots obj slot :database database))
 
-(defun view-classes-and-storable-slots (class)
+(defmethod view-classes-and-storable-slots (class)
   "Get a list of all the tables we need to update and the slots on them
 
    for non normalized classes we return the class and all its storable slots
