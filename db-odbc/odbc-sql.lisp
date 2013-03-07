@@ -42,6 +42,7 @@
         (let ((db (make-instance 'odbc-database
                                  :name (database-name-from-spec connection-spec :odbc)
                                  :database-type :odbc
+                                 :connection-spec connection-spec
                                  :dbi-package (find-package '#:odbc-dbi)
                                  :odbc-conn
                                  (odbc-dbi:connect :user user
