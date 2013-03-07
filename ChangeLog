@@ -1,3 +1,12 @@
+2013-03-07 Ryan Davis <ryan@acceleration.net>
+	* db-postgresql-socket/postgresql-socket-api.lisp - bugfix to
+	adapt to changes in md5:md5sum-sequence. CLSQL now requires a
+	version of MD5 released on or after 2012-11-25 (the latest version
+	currenty in quicklisp). Thanks to Nicolas Neuss for the bug
+	report.
+	* db-odbc/odbc-sql.lisp - keep a reference to the original
+	connection spec used to create `odbc-database` connections
+
 2013-01-09 Russ Tyndall <russ@acceleration.net>
 	sql/oodml.lisp - changed view-classes-and-storable-slots to a
 	method (as it was intended to be all along)
