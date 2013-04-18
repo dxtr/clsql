@@ -408,7 +408,7 @@ list of characters and replacement strings."
   (setq cl:*features* (delete :clsql-lowercase-reader cl:*features*)))
 
 (defun replace-all (string part replacement &key (test #'char=) stream)
-  "Returns a new string in which all the occurences of the part 
+  "Returns a new string in which all the occurences of the part
 is replaced with replacement. [FROM http://cl-cookbook.sourceforge.net/strings.html#manip]"
   (let ((out (or stream (make-string-output-stream))))
     (loop with part-length = (length part)
@@ -443,7 +443,7 @@ removed. keys are searched with #'MEMBER"
     ;;clearing mechanism. If you are on an implementation that doesn't support
     ;;weak hash tables then you're memory may accumulate.
 
-    #-(or sbcl allegro clisp lispworks)
+    #-(or sbcl allegro clisp lispworks ccl)
     (warn "UNSAFE! use of weak hash on implementation without support. (see clsql/sql/utils.lisp to add)")
 
     (make-hash-table
@@ -451,6 +451,7 @@ removed. keys are searched with #'MEMBER"
       #+clisp     :weak      #+clisp :value
       #+lispworks :weak-kind #+lispworks :value
       #+sbcl :weakness #+sbcl :value
+      #+ccl :weak #+ccl :value
       ,@args)
     ))
 

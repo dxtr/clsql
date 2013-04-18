@@ -1,3 +1,8 @@
+2013-04-17 Kevin Rosenberg <kevin@rosenberg.net>
+	* Version 6.4.1
+	* sql/utils.lisp: Patch from Ben Hyde to add weak hash table
+	support for CCL.
+
 2013-03-07 Ryan Davis <ryan@acceleration.net>
 	* db-postgresql-socket/postgresql-socket-api.lisp - bugfix to
 	adapt to changes in md5:md5sum-sequence. CLSQL now requires a
