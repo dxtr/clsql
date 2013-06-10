@@ -373,6 +373,8 @@
          #:view-table
          #:bigint
          #:varchar
+         #:longchar
+         #:text
          #:generalized-boolean
          #:mediumint
          #:smallint

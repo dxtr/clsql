@@ -105,7 +105,7 @@
               '(([id] integer)
                 ([height] float)
                 ([name] (string 24))
-                ([comments] longchar)))
+                ([comments] text)))
 => 
 (table-exists-p [foo]) 
 => T 

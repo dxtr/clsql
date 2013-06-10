@@ -22,7 +22,8 @@
 
 (defmethod database-get-type-specifier (type args database
                                         (db-type (eql :postgresql)))
-  (declare (ignore type args database))
+  (warn "Could not determine a valid :postgresqlsql type specifier for ~A ~A ~A, defaulting to VARCHAR "
+        type args database)
   "VARCHAR")
 
 (defmethod database-get-type-specifier ((type (eql 'string)) args database

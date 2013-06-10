@@ -1,3 +1,28 @@
+2013-06-10 Russ Tyndall <russ@acceleration.net>
+        * sql/oodml.lisp, sql/generic-postgresql.lisp, doc/ref-fddl.xml,
+	  sql/packages.lisp
+
+	Updated get-database-type-specifier to handle text/longchar type
+	and refactored
+
+        * added a warning above defaulting to VARCHAR (since its probably
+        NOT what is expected on a bad type specifier).
+
+        * added a case where the specified type being a string, passes
+        that string directly (to better/more easily allow db-specific
+        data-types).
+
+        * added cases where longchar or text converts to text, and
+        exported those symbols (as this seemed type seemed to be missing
+        from fddl/oddl anyway).
+
+        * reorganized these default methods into a single method with a
+        case statement rather than many eql specified methods (about half
+        the code)
+
+         * updated the docs to use text instead of longchar since text is
+         a more standard db-type (pg,my,and ms all use text)
+
 2013-04-17 Kevin Rosenberg <kevin@rosenberg.net>
 	* Version 6.4.1
 	* sql/utils.lisp: Patch from Ben Hyde to add weak hash table

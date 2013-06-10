@@ -465,136 +465,80 @@
             (error "No view-table for class ~A"  classname))
           (sql-expression :table (view-table class))))
 
-
-(defmethod database-get-type-specifier (type args database db-type)
-  (declare (ignore type args database db-type))
-  (format nil "VARCHAR(~D)" *default-string-length*))
-
-(defmethod database-get-type-specifier ((type (eql 'integer)) args database db-type)
-  (declare (ignore database db-type))
-  (if args
-      (format nil "INT(~A)" (car args))
-      "INT"))
-
 (deftype tinyint ()
   "An 8-bit integer, this width may vary by SQL implementation."
   'integer)
-
-(defmethod database-get-type-specifier ((type (eql 'tinyint)) args database db-type)
-  (declare (ignore args database db-type))
-  "INT")
 
 (deftype smallint ()
   "An integer smaller than a 32-bit integer. this width may vary by SQL implementation."
   'integer)
 
-(defmethod database-get-type-specifier ((type (eql 'smallint)) args database db-type)
-  (declare (ignore args database db-type))
-  "INT")
-
 (deftype mediumint ()
   "An integer smaller than a 32-bit integer, but may be larger than a smallint. This width may vary by SQL implementation."
   'integer)
 
-(defmethod database-get-type-specifier ((type (eql 'mediumint)) args database db-type)
-  (declare (ignore args database db-type))
-  "INT")
-
 (deftype bigint ()
   "An integer larger than a 32-bit integer, this width may vary by SQL implementation."
   'integer)
-
-(defmethod database-get-type-specifier ((type (eql 'bigint)) args database db-type)
-  (declare (ignore args database db-type))
-  "BIGINT")
 
 (deftype varchar (&optional size)
   "A variable length string for the SQL varchar type."
   (declare (ignore size))
   'string)
 
-(defmethod database-get-type-specifier ((type (eql 'varchar)) args
-                                        database db-type)
-  (declare (ignore database db-type))
-  (if args
-      (format nil "VARCHAR(~A)" (car args))
-      (format nil "VARCHAR(~D)" *default-string-length*)))
-
-(defmethod database-get-type-specifier ((type (eql 'string)) args database db-type)
-  (declare (ignore database db-type))
-  (if args
-      (format nil "CHAR(~A)" (car args))
-      (format nil "VARCHAR(~D)" *default-string-length*)))
-
 (deftype universal-time ()
   "A positive integer as returned by GET-UNIVERSAL-TIME."
   '(integer 1 *))
 
-(defmethod database-get-type-specifier ((type (eql 'universal-time)) args database db-type)
-  (declare (ignore args database db-type))
-  "BIGINT")
-
-(defmethod database-get-type-specifier ((type (eql 'wall-time)) args database db-type)
-  (declare (ignore args database db-type))
-  "TIMESTAMP")
-
-(defmethod database-get-type-specifier ((type (eql 'date)) args database db-type)
-  (declare (ignore args database db-type))
-  "DATE")
-
-(defmethod database-get-type-specifier ((type (eql 'duration)) args database db-type)
-  (declare (ignore database args db-type))
-  "VARCHAR")
-
-(defmethod database-get-type-specifier ((type (eql 'money)) args database db-type)
-  (declare (ignore database args db-type))
-  "INT8")
+(deftype generalized-boolean ()
+  "A type which outputs a SQL boolean value, though any lisp type can be stored in the slot."
+  t)
 
 #+ignore
 (deftype char (&optional len)
   "A lisp type for the SQL CHAR type."
   `(string ,len))
 
-(defmethod database-get-type-specifier ((type (eql 'float)) args database db-type)
-  (declare (ignore database db-type))
-  (if args
-      (format nil "FLOAT(~A)" (car args))
-      "FLOAT"))
-
-(defmethod database-get-type-specifier ((type (eql 'long-float)) args database db-type)
-  (declare (ignore database db-type))
-  (if args
-      (format nil "FLOAT(~A)" (car args))
-      "FLOAT"))
-
-(deftype generalized-boolean ()
-  "A type which outputs a SQL boolean value, though any lisp type can be stored in the slot."
-  t)
-
-(defmethod database-get-type-specifier ((type (eql 'boolean)) args database db-type)
+(defmethod database-get-type-specifier ((type string) args database (db-type t))
+  "Pass through the literal type as defined in the type string"
   (declare (ignore args database db-type))
-  "BOOL")
+  type)
 
-(defmethod database-get-type-specifier ((type (eql 'generalized-boolean)) args database db-type)
-  (declare (ignore args database db-type))
-  "BOOL")
-
-(defmethod database-get-type-specifier ((type (eql 'number)) args database db-type)
-  (declare (ignore database db-type))
-  (cond
-    ((and (consp args) (= (length args) 2))
-     (format nil "NUMBER(~D,~D)" (first args) (second args)))
-    ((and (consp args) (= (length args) 1))
-     (format nil "NUMBER(~D)" (first args)))
-    (t
-     "NUMBER")))
-
-(defmethod database-get-type-specifier ((type (eql 'char)) args database db-type)
-  (declare (ignore database db-type))
-  (if args
-      (format nil "CHAR(~D)" (first args))
-      "CHAR(1)"))
-
+(defmethod database-get-type-specifier ((type symbol) args database db-type)
+  (case type
+    (char (if args
+              (format nil "CHAR(~D)" (first args))
+              "CHAR(1)"))
+    ((varchar string)
+     (if args
+         (format nil "VARCHAR(~A)" (car args))
+         (format nil "VARCHAR(~D)" *default-string-length*)))
+    ((longchar text) "text")
+    (integer (if args
+                 (format nil "INT(~A)" (car args))
+                 "INT"))
+    ((tinyint smallint mediumint) "INT")
+    ((long-float float)
+     (if args
+         (format nil "FLOAT(~A)" (car args))
+         "FLOAT"))
+    ((bigint universal-time) "BIGINT")
+    (number
+     (cond
+       ((and (consp args) (= (length args) 2))
+        (format nil "NUMBER(~D,~D)" (first args) (second args)))
+       ((and (consp args) (= (length args) 1))
+        (format nil "NUMBER(~D)" (first args)))
+       (t
+        "NUMBER")))
+    (wall-time "TIMESTAMP")
+    (date "DATE")
+    (duration "VARCHAR")
+    (money "INT8")
+    ((boolean generalized-boolean) "BOOL")
+    (t (warn "Could not determine a valid ~A type specifier for ~A ~A ~A, defaulting to VARCHAR "
+             db-type type args database)
+     (format nil "VARCHAR(~D)" *default-string-length*))))
 
 (defmethod database-output-sql-as-type (type val database db-type)
   (declare (ignore type database db-type))
