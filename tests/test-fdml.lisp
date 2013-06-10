@@ -532,7 +532,7 @@
 	      being each tuple in
 	    [select [addressid] :from [addr] :order-by [addressid]]
 	    collect addressid))
-  (1 2))
+  (1 2 3))
 
 (deftest :fdml/loop/3
     (with-dataset *ds-employees*
@@ -540,7 +540,7 @@
 	      being each tuple in
 	    [select [addressid] :from [addr] :order-by [addressid]]
 	    collect addressid))
-  (1 2))
+  (1 2 3))
 
 ;; inserts a record using all values only and then deletes it
 (deftest :fdml/insert/1
