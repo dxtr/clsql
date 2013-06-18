@@ -72,25 +72,20 @@
 
 ;;; Type methods
 
-(defmethod database-get-type-specifier ((type (eql 'wall-time)) args database
+(defmethod database-get-type-specifier ((type symbol) args database
                                         (db-type (eql :mssql)))
-  (declare (ignore args database))
-  "DATETIME")
-
-(defmethod database-get-type-specifier ((type (eql 'date)) args database
-                                        (db-type (eql :mssql)))
-  (declare (ignore args database))
-  "SMALLDATETIME")
-
-(defmethod database-get-type-specifier ((type (eql 'boolean)) args database
-                                        (db-type (eql :mssql)))
-  (declare (ignore args database))
-  "BIT")
-
-(defmethod database-get-type-specifier ((type (eql 'generalized-boolean)) args database
-                                        (db-type (eql :mssql)))
-  (declare (ignore args database))
-  "BIT")
+  "Special database types for MSSQL backends"
+  (declare (ignore database db-type args))
+  (case type
+    (wall-time "DATETIME")
+    (date "SMALLDATETIME")
+    ((generalized-boolean boolean) "BIT")
+    ((longchar text) "ntext")
+    ((varchar string)
+     (if args
+         (format nil "NVARCHAR(~A)" (car args))
+         (format nil "NVARCHAR(~D)" *default-string-length*)))
+    (t (call-next-method))))
 
 ;;; Generation of SQL strings from lisp expressions
 

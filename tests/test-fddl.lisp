@@ -168,7 +168,8 @@ B varchar(32))")
     (with-dataset *ds-fddl*
       (multiple-value-bind (type length scale nullable)
 	  (clsql:attribute-type [c] [alpha])
-	(values (clsql-sys:in type :varchar :varchar2) length scale nullable)))
+	(values (clsql-sys:in type :varchar :varchar2 :nvarchar)
+                length scale nullable)))
   t 30 nil 1)
 
 (deftest :fddl/attributes/5

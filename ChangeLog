@@ -1,3 +1,15 @@
+2013-06-18 Russ Tyndall <russ@acceleration.net>
+        * sql/generic-odbc.lisp, sql/generic-postgresql.lisp, sql/oodml.lisp
+	  tests/test-fddl.lisp
+
+	refactored database-get-type-specifier for postgres and mssql
+
+        Single methods with a case on the symbol arg (similar to the recent
+        refactoring in oodml.lisp)
+
+        This reduces line count and generally makes it easier to find and
+        read all the backend-specific types
+
 2013-06-10 Russ Tyndall <russ@acceleration.net>
         * sql/oodml.lisp, sql/generic-postgresql.lisp, doc/ref-fddl.xml,
 	  sql/packages.lisp

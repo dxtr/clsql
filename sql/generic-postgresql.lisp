@@ -20,44 +20,28 @@
 
 ;; Object functions
 
-(defmethod database-get-type-specifier (type args database
+(defmethod database-get-type-specifier ((type symbol) args database
                                         (db-type (eql :postgresql)))
-  (warn "Could not determine a valid :postgresqlsql type specifier for ~A ~A ~A, defaulting to VARCHAR "
-        type args database)
-  "VARCHAR")
-
-(defmethod database-get-type-specifier ((type (eql 'string)) args database
-                                        (db-type (eql :postgresql)))
-  (declare (ignore database))
-  (if args
-      (format nil "CHAR(~A)" (car args))
-    "VARCHAR"))
-
-(defmethod database-get-type-specifier ((type (eql 'tinyint)) args database
-                                        (db-type (eql :postgresql)))
-  (declare (ignore args database))
-  "INT2")
-
-(defmethod database-get-type-specifier ((type (eql 'smallint)) args database
-                                        (db-type (eql :postgresql)))
-  (declare (ignore args database))
-  "INT2")
-
-(defmethod database-get-type-specifier ((type (eql 'wall-time)) args database
-                                        (db-type (eql :postgresql)))
-  (declare (ignore args database))
-  "TIMESTAMP WITHOUT TIME ZONE")
-
-(defmethod database-get-type-specifier ((type (eql 'number)) args database
-                                        (db-type (eql :postgresql)))
-  (declare (ignore database))
-  (cond
-   ((and (consp args) (= (length args) 2))
-    (format nil "NUMERIC(~D,~D)" (first args) (second args)))
-   ((and (consp args) (= (length args) 1))
-    (format nil "NUMERIC(~D)" (first args)))
-   (t
-    "NUMERIC")))
+  "Special database types for POSTGRESQL backends"
+  (declare (ignore database db-type))
+  (case type
+    (wall-time ;; TODO: why is this WITHOUT...
+     "TIMESTAMP WITHOUT TIME ZONE")
+    (string
+     ;; TODO: the default to CHAR here seems specious as the PG docs claim
+     ;; that char is slower than varchar
+     (if args
+         (format nil "CHAR(~A)" (car args))
+         "VARCHAR"))
+    (number
+     (cond
+       ((and (consp args) (= (length args) 2))
+        (format nil "NUMERIC(~D,~D)" (first args) (second args)))
+       ((and (consp args) (= (length args) 1))
+        (format nil "NUMERIC(~D)" (first args)))
+       (t "NUMERIC")))
+    ((tinyint smallint) "INT2")
+    (t (call-next-method))))
 
 ;;; Backend functions
 

@@ -504,6 +504,7 @@
   (declare (ignore args database db-type))
   type)
 
+
 (defmethod database-get-type-specifier ((type symbol) args database db-type)
   (case type
     (char (if args
