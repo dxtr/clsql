@@ -33,16 +33,6 @@
   (declare (ignore args database))
   "TINYINT")
 
-(defmethod database-output-sql-as-type ((type (eql 'boolean)) val database
-                                        (db-type (eql :mysql)))
-  (declare (ignore database))
-  (if val 1 0))
-
-(defmethod database-output-sql-as-type ((type (eql 'generalized-boolean)) val database
-                                        (db-type (eql :mysql)))
-  (declare (ignore database))
-  (if val 1 0))
-
 (defmethod read-sql-value (val (type (eql 'boolean)) database
                            (db-type (eql :mysql)))
   (declare (ignore database))

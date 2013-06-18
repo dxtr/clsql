@@ -1,4 +1,24 @@
 2013-06-18 Russ Tyndall <russ@acceleration.net>
+        * sql/oodml.lisp, sql/mysql-objects.lisp
+        refactored database-output-sql-as-type in a similar fashion to
+        the previous refactor of database-get-type-specifier (fewer
+        methods using case instead of eql specifiers)
+
+        * removed very strange definition of outputing floats as strings
+          for something sane (it was previously doing silly work like
+          setting the default read float type (which AFAICT doesnt affect
+          printing))
+
+        * half of the cases nil returned "" other times it returned nil,
+          now if we get a null value we return nil always
+
+        * removed odd-logic (seemingly untouched since the initial import),
+          that removed null characters from printed lists.  If we have #\null
+          in a printed list, we had probably better figure out what went wrong
+          there rather than destructively modifying the list output on the way
+          to the DB ;; removed (substitute-char-string escaped #\Null " ")
+
+2013-06-18 Russ Tyndall <russ@acceleration.net>
         * sql/generic-odbc.lisp, sql/generic-postgresql.lisp, sql/oodml.lisp
 	  tests/test-fddl.lisp
 

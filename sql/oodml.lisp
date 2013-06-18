@@ -545,62 +545,36 @@
   (declare (ignore type database db-type))
   val)
 
-(defmethod database-output-sql-as-type ((type (eql 'list)) val database db-type)
-  (declare (ignore database db-type))
-  (progv '(*print-circle* *print-array*) '(t t)
-    (let ((escaped (prin1-to-string val)))
-      (substitute-char-string
-       escaped #\Null " "))))
-
-(defmethod database-output-sql-as-type ((type (eql 'symbol)) val database db-type)
-  (declare (ignore database db-type))
-  (if val
-      (concatenate 'string
-                   (package-name (symbol-package val))
-                   "::"
-                   (symbol-name val))
-      ""))
-
-(defmethod database-output-sql-as-type ((type (eql 'keyword)) val database db-type)
-  (declare (ignore database db-type))
-  (if val
-      (symbol-name val)
-      ""))
-
-(defmethod database-output-sql-as-type ((type (eql 'vector)) val database db-type)
-  (declare (ignore database db-type))
-  (progv '(*print-circle* *print-array*) '(t t)
-    (prin1-to-string val)))
-
-(defmethod database-output-sql-as-type ((type (eql 'array)) val database db-type)
-  (declare (ignore database db-type))
-  (progv '(*print-circle* *print-array*) '(t t)
-    (prin1-to-string val)))
-
-(defmethod database-output-sql-as-type ((type (eql 'boolean)) val database db-type)
-  (declare (ignore database db-type))
-  (if val "t" "f"))
-
-(defmethod database-output-sql-as-type ((type (eql 'generalized-boolean)) val database db-type)
-  (declare (ignore database db-type))
-  (if val "t" "f"))
-
-(defmethod database-output-sql-as-type ((type (eql 'string)) val database db-type)
-  (declare (ignore database db-type))
-  val)
-
-(defmethod database-output-sql-as-type ((type (eql 'char)) val database db-type)
-  (declare (ignore database db-type))
-  (etypecase val
-    (character (write-to-string val))
-    (string val)))
-
-(defmethod database-output-sql-as-type ((type (eql 'float)) val database db-type)
-  (declare (ignore database db-type))
-  (if (eq (type-of val) 'null)
-      nil
-      (let ((*read-default-float-format* (type-of val)))
-       (format nil "~F" val))))
+(defmethod database-output-sql-as-type ((type symbol) val database db-type)
+  (declare (ignore database))
+  (case type ;; booleans handle null differently
+    ((boolean generalized-boolean)
+     (case db-type
+       ;; done here so it can be done once
+       ((:mssql :mysql) (if val 1 0))
+       (otherwise (if val "t" "f"))))
+    (otherwise
+     ;; in all other cases if we have nil give everyone else a shot at it,
+     ;; which by default returns nil
+     (if (null val)
+         (call-next-method)
+         (case type
+           (symbol
+            (format nil "~A::~A"
+                    (package-name (symbol-package val))
+                    (symbol-name val)))
+           (keyword (symbol-name val))
+           (string val)
+           (char (etypecase val
+                   (character (write-to-string val))
+                   (string val)))
+           (float (format nil "~F" val))
+           ((list vector array)
+            (let* ((*print-circle* t)
+                   (*print-array* t)
+                   (value (prin1-to-string val)))
+              value))
+           (otherwise (call-next-method)))))))
 
 (defmethod read-sql-value (val type database db-type)
   (declare (ignore database db-type))

@@ -94,16 +94,6 @@
     (:mssql "1")
     (t "'Y'")))
 
-(defmethod database-output-sql-as-type ((type (eql 'boolean)) val database
-                                        (db-type (eql :mssql)))
-  (declare (ignore database))
-  (if val 1 0))
-
-(defmethod database-output-sql-as-type ((type (eql 'generalized-boolean)) val database
-                                        (db-type (eql :mssql)))
-  (declare (ignore database))
-  (if val 1 0))
-
 ;;; Database backend capabilities
 
 (defmethod db-type-use-fully-qualified-column-on-drop-index? ((db-type (eql :mssql)))
