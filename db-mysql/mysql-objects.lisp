@@ -13,25 +13,15 @@
 
 (in-package #:clsql-mysql)
 
-(defmethod database-get-type-specifier ((type (eql 'wall-time)) args database
+(defmethod database-get-type-specifier ((type symbol) args database
                                         (db-type (eql :mysql)))
-  (declare (ignore args database))
-  "DATETIME")
-
-(defmethod database-get-type-specifier ((type (eql 'smallint)) args database
-                                        (db-type (eql :mysql)))
-  (declare (ignore args database))
-  "SMALLINT")
-
-(defmethod database-get-type-specifier ((type (eql 'mediumint)) args database
-                                        (db-type (eql :mysql)))
-  (declare (ignore args database))
-  "MEDIUMINT")
-
-(defmethod database-get-type-specifier ((type (eql 'tinyint)) args database
-                                        (db-type (eql :mysql)))
-  (declare (ignore args database))
-  "TINYINT")
+  (declare (ignore args database db-type))
+  (case type
+    (wall-time "DATETIME")
+    (tinyint "TINYINT")
+    (smallint "SMALLINT")
+    (mediumint "MEDIUMINT")
+    (t (call-next-method))))
 
 (defmethod read-sql-value (val (type (eql 'boolean)) database
                            (db-type (eql :mysql)))

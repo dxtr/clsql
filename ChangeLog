@@ -1,3 +1,8 @@
+2013-06-19 Russ Tyndall <russ@acceleration.net>
+        * sql/mysql-objects.lisp
+        Found and refactored a way some more eql specified methods of
+        database-get-type-specifier in mysql
+
 2013-06-18 Russ Tyndall <russ@acceleration.net>
         * sql/oodml.lisp, sql/mysql-objects.lisp
         refactored database-output-sql-as-type in a similar fashion to
