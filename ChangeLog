@@ -1,4 +1,21 @@
 2013-06-19 Russ Tyndall <russ@acceleration.net>
+        * sql/oodml.lisp, db-postgresql-socket3/sql.lisp,
+          db-mysql/mysql-objects.lisp, sql/generic-odbc.lisp
+        Refactored read-sql-value similar to the other recent refactorings
+
+        * the symbol case now uses intern instead of read-from-string
+          (which may not return a symbol and could have security issues
+          since read-eval was not being unset)
+
+        * read-eval is now off for all cases
+
+        * centralized logic into a single case statement, hopefully making
+          this more readable and debuggable
+
+        * TODO: make these refactorings to the oracle backend (I cannot
+          test against oracle and am loathe to change without testing
+
+2013-06-19 Russ Tyndall <russ@acceleration.net>
         * sql/mysql-objects.lisp
         Found and refactored a way some more eql specified methods of
         database-get-type-specifier in mysql

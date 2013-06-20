@@ -576,119 +576,70 @@
               value))
            (otherwise (call-next-method)))))))
 
-(defmethod read-sql-value (val type database db-type)
+(defmethod read-sql-value (val type database db-type
+                           &aux *read-eval*)
   (declare (ignore database db-type))
+  ;; TODO: All the read-from-strings in here do not check that
+  ;; what we read was of the correct type, should this change?
+
+  ;; TODO: Should this case `(typep val type)=>t` be an around
+  ;; method that short ciruits?
   (cond
     ((null type) val) ;;we have no desired type, just give the value
     ((typep val type) val) ;;check that it hasn't already been converted.
     ((typep val 'string) (read-from-string val)) ;;maybe read will just take care of it?
     (T (error "Unable to read-sql-value ~a as type ~a" val type))))
 
-(defmethod read-sql-value (val (type (eql 'string)) database db-type)
-  (declare (ignore database db-type))
-  val)
-
-(defmethod read-sql-value (val (type (eql 'varchar)) database db-type)
-  (declare (ignore database db-type))
-  val)
-
-(defmethod read-sql-value (val (type (eql 'char)) database db-type)
-  (declare (ignore database db-type))
-  (schar val 0))
-
-(defmethod read-sql-value (val (type (eql 'keyword)) database db-type)
-  (declare (ignore database db-type))
-  (when (< 0 (length val))
-    (intern (symbol-name-default-case val)
-            (find-package '#:keyword))))
-
-(defmethod read-sql-value (val (type (eql 'symbol)) database db-type)
-  (declare (ignore database db-type))
-  (when (< 0 (length val))
-    (unless (string= val (symbol-name-default-case "NIL"))
-      (read-from-string val))))
-
-(defmethod read-sql-value (val (type (eql 'integer)) database db-type)
-  (declare (ignore database db-type))
-  (etypecase val
-    (string
-     (unless (string-equal "NIL" val)
-       (parse-integer val)))
-    (number val)))
-
-(defmethod read-sql-value (val (type (eql 'smallint)) database db-type)
-  (declare (ignore database db-type))
-  (etypecase val
-    (string
-     (unless (string-equal "NIL" val)
-       (parse-integer val)))
-    (number val)))
-
-(defmethod read-sql-value (val (type (eql 'bigint)) database db-type)
-  (declare (ignore database db-type))
-  (etypecase val
-    (string
-     (unless (string-equal "NIL" val)
-       (parse-integer val)))
-    (number val)))
-
-(defmethod read-sql-value (val (type (eql 'float)) database db-type)
-  (declare (ignore database db-type))
-  ;; writing 1.0 writes 1, so we we *really* want a float, must do (float ...)
-  (etypecase val
-    (string (float (read-from-string val)))
-    (float val)))
-
-(defmethod read-sql-value (val (type (eql 'double-float)) database db-type)
-  (declare (ignore database db-type))
-  ;; writing 1.0 writes 1, so if we *really* want a float, must do (float ...)
-  (etypecase val
-    (string (float
-	     (let ((*read-default-float-format* 'double-float))
-	       (read-from-string val))
-	     1.0d0))
-    (double-float val)
-    (float (coerce val 'double-float))))
-
-(defmethod read-sql-value (val (type (eql 'boolean)) database db-type)
-  (declare (ignore database db-type))
-  (equal "t" val))
-
-(defmethod read-sql-value (val (type (eql 'generalized-boolean)) database db-type)
-  (declare (ignore database db-type))
-  (equal "t" val))
-
-(defmethod read-sql-value (val (type (eql 'number)) database db-type)
-  (declare (ignore database db-type))
-  (etypecase val
-    (string
-     (unless (string-equal "NIL" val)
-       (read-from-string val)))
-    (number val)))
-
-(defmethod read-sql-value (val (type (eql 'universal-time)) database db-type)
-  (declare (ignore database db-type))
-  (unless (eq 'NULL val)
-    (etypecase val
-      (string
-       (parse-integer val))
-      (number val))))
-
-(defmethod read-sql-value (val (type (eql 'wall-time)) database db-type)
-  (declare (ignore database db-type))
-  (unless (eq 'NULL val)
-    (parse-timestring val)))
-
-(defmethod read-sql-value (val (type (eql 'date)) database db-type)
-  (declare (ignore database db-type))
-  (unless (eq 'NULL val)
-    (parse-datestring val)))
-
-(defmethod read-sql-value (val (type (eql 'duration)) database db-type)
-  (declare (ignore database db-type))
-  (unless (or (eq 'NULL val)
-              (equal "NIL" val))
-    (parse-timestring val)))
+(defmethod read-sql-value (val (type symbol) database db-type
+                           ;; never eval while reading values
+                           &aux *read-eval*)
+  ;; TODO: All the read-from-strings in here do not check that
+  ;; what we read was of the correct type, should this change?
+  (unless (or (equalp "nil" val) (eql 'null val))
+    (case type
+      ((string varchar) val)
+      (char (etypecase val
+              (string (schar val 0))
+              (character val)))
+      (keyword
+       (when (< 0 (length val))
+         (intern (symbol-name-default-case val) :keyword)))
+      (symbol
+       (when (< 0 (length val))
+         (intern (symbol-name-default-case val))))
+      ((smallint mediumint bigint integer universal-time)
+       (etypecase val
+         (string (parse-integer val))
+         (number val)))
+      ((double-float float)
+       ;; ensure that whatever we got is coerced to a float of the correct
+       ;; type (eg: 1=>1.0d0)
+       (float
+        (etypecase val
+          (string (let ((*read-default-float-format*
+                          (ecase type
+                            (float 'single-float)
+                            (double-float 'double-float))))
+                    (read-from-string val)))
+          (float val))
+        (if (eql type 'double-float) 1.0d0 1.0s0)))
+      (number
+       (etypecase val
+         (string (read-from-string val))
+         (number val)))
+      ((boolean generalized-boolean)
+       (if (member val '(nil t))
+           val
+           (etypecase val
+             (string
+              (when (member val '("1" "t" "true" "y") :test #'string-equal)
+                t))
+             (number (not (zerop val))))))
+      ((wall-time duration)
+       (parse-timestring val))
+      (date
+       (parse-datestring val))
+      (t (call-next-method)))))
 
 ;; ------------------------------------------------------------
 ;; Logic for 'faulting in' :join slots

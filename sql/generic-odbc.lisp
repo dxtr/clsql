@@ -44,32 +44,6 @@
           (slot-value db 'list-all-table-columns-fn)
           (intern (symbol-name '#:list-all-table-columns) pkg))))
 
-;;; Object methods
-
-(defmethod read-sql-value (val (type (eql 'boolean))
-                           (database generic-odbc-database)
-                           (db-type (eql :postgresql)))
-  (if (string= "0" val) nil t))
-
-(defmethod read-sql-value (val (type (eql 'generalized-boolean))
-                           (database generic-odbc-database)
-                           (db-type (eql :postgresql)))
-  (if (string= "0" val) nil t))
-
-(defmethod read-sql-value (val (type (eql 'boolean)) database
-                           (db-type (eql :mssql)))
-  (declare (ignore database))
-  (etypecase val
-    (string (if (string= "0" val) nil t))
-    (integer (if (zerop val) nil t))))
-
-(defmethod read-sql-value (val (type (eql 'generalized-boolean)) database
-                           (db-type (eql :mssql)))
-  (declare (ignore database))
-  (etypecase val
-    (string (if (string= "0" val) nil t))
-    (integer (if (zerop val) nil t))))
-
 ;;; Type methods
 
 (defmethod database-get-type-specifier ((type symbol) args database

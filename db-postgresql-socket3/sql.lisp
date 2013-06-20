@@ -325,12 +325,3 @@
   (clsql-sys:initialize-database-type :database-type :postgresql-socket3))
 
 
-;; Type munging functions
-
-(defmethod read-sql-value (val (type (eql 'boolean)) (database postgresql-socket3-database) db-type)
-  (declare (ignore database db-type))
-  val)
-
-(defmethod read-sql-value (val (type (eql 'generalized-boolean)) (database postgresql-socket3-database) db-type)
-  (declare (ignore database db-type))
-  val)

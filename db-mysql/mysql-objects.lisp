@@ -23,16 +23,3 @@
     (mediumint "MEDIUMINT")
     (t (call-next-method))))
 
-(defmethod read-sql-value (val (type (eql 'boolean)) database
-                           (db-type (eql :mysql)))
-  (declare (ignore database))
-  (etypecase val
-    (string (if (string= "0" val) nil t))
-    (integer (if (zerop val) nil t))))
-
-(defmethod read-sql-value (val (type (eql 'generalized-boolean)) database
-                           (db-type (eql :mysql)))
-  (declare (ignore database))
-  (etypecase val
-    (string (if (string= "0" val) nil t))
-    (integer (if (zerop val) nil t))))
