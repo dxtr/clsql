@@ -1,3 +1,7 @@
+2013-09-27 Russ Tyndall <russ@acceleration.net>
+	* fixed bug converting to boolean in db-mysql/mysql-sql.lisp
+	from github user Sectoid https://github.com/UnwashedMeme/clsql/pull/1
+
 2013-06-19 Russ Tyndall <russ@acceleration.net>
         * sql/oodml.lisp, db-postgresql-socket3/sql.lisp,
           db-mysql/mysql-objects.lisp, sql/generic-odbc.lisp

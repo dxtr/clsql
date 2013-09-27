@@ -159,9 +159,9 @@
                   (:boolean-ptr
                    (uffi:with-foreign-object (fo :byte)
                      (setf (uffi:deref-pointer fo :byte)
-                           (if (or (zerop value) (null value))
-                               0
-                               1))
+                           (case value
+                             ((nil 0) 0)
+                             (t 1)))
                      (mysql-options mysql-ptr option-code fo)))))))))))
 
 (defmethod database-connect (connection-spec (database-type (eql :mysql)))
