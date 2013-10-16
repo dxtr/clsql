@@ -1111,17 +1111,20 @@ uninclusive, and the args from that keyword to the end."
    ))
 
 (defmethod database-constraint-statement (constraint-list database)
-  (declare (ignore database))
-  (make-constraints-description constraint-list))
+  (make-constraints-description constraint-list database))
 
-(defun make-constraints-description (constraint-list)
+(defmethod database-translate-constraint (constraint database)
+  (assoc (symbol-name constraint)
+	 *constraint-types*
+	 :test #'equal))
+
+(defun make-constraints-description (constraint-list database)
   (if constraint-list
       (let ((string ""))
         (do ((constraint constraint-list (cdr constraint)))
             ((null constraint) string)
-          (let ((output (assoc (symbol-name (car constraint))
-                               *constraint-types*
-                               :test #'equal)))
+          (let ((output (database-translate-constraint (car constraint)
+						       database)))
             (if (null output)
                 (error 'sql-user-error
                        :message (format nil "unsupported column constraint '~A'"
