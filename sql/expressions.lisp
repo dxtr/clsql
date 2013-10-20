@@ -1105,6 +1105,7 @@ uninclusive, and the args from that keyword to the end."
    (cons (symbol-name-default-case "UNSIGNED") "UNSIGNED")
    (cons (symbol-name-default-case "ZEROFILL") "ZEROFILL")
    (cons (symbol-name-default-case "AUTO-INCREMENT") "AUTO_INCREMENT")
+   (cons (symbol-name-default-case "AUTOINCREMENT") "AUTOINCREMENT")
    (cons (symbol-name-default-case "DEFAULT") "DEFAULT")
    (cons (symbol-name-default-case "UNIQUE") "UNIQUE")
    (cons (symbol-name-default-case "IDENTITY") "IDENTITY (1,1)") ;; added for sql-server support
