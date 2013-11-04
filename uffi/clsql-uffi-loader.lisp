@@ -37,9 +37,9 @@ well as any of the filenames in any of the clsql:*foreign-library-search-paths*"
                           (loop for search-path in clsql:*foreign-library-search-paths*
                                 thereis (try-load (merge-pathnames pn search-path))))))
      (when errorp
-       (error "Couldn't load foreign librar~@P ~{~S~^, ~}. (searched ~S)"
+       (error "Couldn't load foreign librar~@P ~{~S~^, ~}. (searched ~S: ~S)"
               (length filenames) filenames
-              'clsql:*foreign-library-search-paths*)))))
+              'clsql:*foreign-library-search-paths* clsql:*foreign-library-search-paths*)))))
 
 ;; searches clsql_uffi64 to accomodate both 32-bit and 64-bit libraries on same system
 (defvar *clsql-uffi-library-filenames*
