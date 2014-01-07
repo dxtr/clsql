@@ -44,9 +44,11 @@ B varchar(32))")
 ;; list current tables
 (deftest :fddl/table/1
     (with-dataset *ds-fddl*
-      (sort (mapcar #'string-downcase
-		    (clsql:list-tables ))
-	    #'string<))
+      (let ((tables (sort (mapcar #'string-downcase (clsql:list-tables))
+                          #'string<)))
+        ;; sqlite has a table for autoincrement sequences that we dont care about if
+        ;; it exists
+        (remove "sqlite_sequence" tables :test #'string-equal)))
   ("alpha" "bravo"))
 
 ;; create a table, test for its existence, drop it and test again

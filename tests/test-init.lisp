@@ -262,7 +262,8 @@
           ((and (eql *test-database-type* :sqlite3)
                 (clsql-sys:in test :fddl/view/4 :fdml/select/10
                               :fdml/select/21 :fdml/select/32
-                              :fdml/select/33))
+                              :fdml/select/33
+                              :basic/reallybigintegers/1))
            (push (cons test "not supported by sqlite3.") skip-tests))
           ((and (not (clsql-sys:db-type-has-bigint? db-type))
                 (clsql-sys:in test :basic/bigint/1))

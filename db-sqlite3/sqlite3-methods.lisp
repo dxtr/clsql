@@ -2,19 +2,19 @@
 
 (in-package #:clsql-sys)
 
-;; This method generates primary key constraints part of the table
-;; definition. For Sqlite autoincrement primary keys to work properly
-;; this part of the table definition must be left out.
+
 (defmethod database-pkey-constraint ((class standard-db-class)
-				     (database clsql-sqlite3:sqlite3-database)))
+				     (database clsql-sqlite3:sqlite3-database))
+  (let* ((keys (keyslots-for-class class))
+         (cons (when (= 1 (length keys))
+                 (view-class-slot-db-constraints (first keys)))))
+    ;; This method generates primary key constraints part of the table
+    ;; definition. For Sqlite autoincrement primary keys to work properly
+    ;; this part of the table definition must be left out (IFF autoincrement) .
+    (when (or (null cons) ;; didnt have constraints to check
+              ;; didnt have auto-increment
+              (null (intersection
+                     +auto-increment-names+
+                     (listify cons))))
+      (call-next-method))))
 
-(defmethod database-translate-constraint (constraint
-					  (database clsql-sqlite3:sqlite3-database))
-  ;; Primary purpose of this is method is to intecept and translate
-  ;; auto-increment primary keys constraints.
-  (let ((constraint-name (symbol-name constraint)))
-    (if (eql constraint :auto-increment)
-	(cons constraint "PRIMARY KEY AUTOINCREMENT")
-	(call-next-method))))
-
-;; EOF

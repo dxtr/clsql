@@ -229,14 +229,14 @@
 
     (deftest :basic/reallybigintegers/1
         (with-dataset *ds-reallybigintegers*
-          (let ((a (1- (expt 2 64)))
-                (b (- (expt 2 64) 2))
-                (c (expt 2 63))
-                (d (expt 2 62)))
-            (query
-             (format nil "INSERT INTO testreallybigintegers
+          (let* ((a (1- (expt 2 64)))
+                 (b (- (expt 2 64) 2))
+                 (c (expt 2 63))
+                 (d (expt 2 62))
+                 (sql (format nil "INSERT INTO testreallybigintegers
                               VALUES (~A, ~A, ~A, ~A)"
-                     a b c d))
+                              a b c d)))
+            (query sql)
             (let ((results
                     (query
                      (format nil "SELECT * FROM testreallybigintegers"))))

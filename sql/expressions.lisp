@@ -1093,49 +1093,40 @@ uninclusive, and the args from that keyword to the end."
 ;;
 ;; Column constraint types and conversion to SQL
 ;;
-
-(defparameter *constraint-types*
-  (list
-   (cons (symbol-name-default-case "NOT-NULL") "NOT NULL")
-   (cons (symbol-name-default-case "PRIMARY-KEY") "PRIMARY KEY")
-   (cons (symbol-name-default-case "NOT") "NOT")
-   (cons (symbol-name-default-case "NULL") "NULL")
-   (cons (symbol-name-default-case "PRIMARY") "PRIMARY")
-   (cons (symbol-name-default-case "KEY") "KEY")
-   (cons (symbol-name-default-case "UNSIGNED") "UNSIGNED")
-   (cons (symbol-name-default-case "ZEROFILL") "ZEROFILL")
-   (cons (symbol-name-default-case "AUTO-INCREMENT") "AUTO_INCREMENT")
-   (cons (symbol-name-default-case "AUTOINCREMENT") "AUTOINCREMENT")
-   (cons (symbol-name-default-case "DEFAULT") "DEFAULT")
-   (cons (symbol-name-default-case "UNIQUE") "UNIQUE")
-   (cons (symbol-name-default-case "IDENTITY") "IDENTITY (1,1)") ;; added for sql-server support
-   ))
-
 (defmethod database-constraint-statement (constraint-list database)
   (make-constraints-description constraint-list database))
 
-(defmethod database-translate-constraint (constraint database)
-  (assoc (symbol-name constraint)
-	 *constraint-types*
-	 :test #'equal))
+;; KEEP THIS SYNCED WITH database-translate-constraint
+(defparameter +auto-increment-names+
+  '(:auto-increment :auto_increment :autoincrement :identity))
 
-(defun make-constraints-description (constraint-list database)
-  (if constraint-list
-      (let ((string ""))
-        (do ((constraint constraint-list (cdr constraint)))
-            ((null constraint) string)
-          (let ((output (database-translate-constraint (car constraint)
-						       database)))
-            (if (null output)
-                (error 'sql-user-error
-                       :message (format nil "unsupported column constraint '~A'"
-                                        constraint))
-                (setq string (concatenate 'string string (cdr output))))
-	    (when (equal (symbol-name (car constraint)) "DEFAULT")
-	      (setq constraint (cdr constraint))
-	      (setq string (concatenate 'string string " " (car constraint))))
-            (if (< 1 (length constraint))
-                (setq string (concatenate 'string string " "))))))))
+(defmethod database-translate-constraint (constraint database)
+  (case constraint
+    (:not-null "NOT NULL")
+    (:primary-key "PRIMARY KEY")
+    ((:auto-increment :auto_increment :autoincrement :identity)
+     (ecase (database-underlying-type database)
+       (:mssql "IDENTITY (1,1)")
+       ((:sqlite :sqlite3) "PRIMARY KEY AUTOINCREMENT")
+       (:mysql "AUTO_INCREMENT")))
+    ;; everything else just get the name
+    (T (string-upcase (symbol-name constraint)))))
+
+(defun make-constraints-description (constraint-list database
+                                     &aux (rest constraint-list) constraint)
+  (when constraint-list
+    (flet ((next ()
+             (setf constraint (first rest)
+                   rest (rest rest))
+             constraint))
+      (with-output-to-string (s)
+        (loop while (next)
+              do (unless (keywordp constraint)
+                   (setf constraint (intern (symbol-name constraint) :keyword)))
+                 (write-string (database-translate-constraint constraint database) s)
+                 (when (eql :default constraint) (princ (next) s))
+                 (write-char #\space s)
+              )))))
 
 (defmethod database-identifier ( name  &optional database find-class-p
                                  &aux cls)
