@@ -270,8 +270,9 @@
 
 (declaim (inline sqlite3-table-info))
 (defun sqlite3-table-info (table database)
-  (database-query (format nil "PRAGMA table_info('~A')" table)
-                  database nil nil))
+  (let ((sql (format nil "PRAGMA table_info('~A')"
+                     (clsql-sys::unescaped-database-identifier table))))
+    (database-query sql database nil nil)))
 
 (defmethod database-list-attributes (table (database sqlite3-database)
                                            &key (owner nil))
