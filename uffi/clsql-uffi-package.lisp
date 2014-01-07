@@ -25,7 +25,6 @@
    #:atoi
    #:atol
    #:atof
-   #:atol64
    #:make-64-bit-integer
    #:make-128-bit-integer
    #:split-64-bit-integer)

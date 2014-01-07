@@ -107,12 +107,6 @@
     ((str (* :unsigned-char)))
   :returning :double)
 
-(uffi:def-function "atol64"
-    ((str (* :unsigned-char))
-     (high32 (* :unsigned-int)))
-  :module "clsql-uffi"
-  :returning :unsigned-int)
-
 (uffi:def-constant +2^32+ 4294967296)
 (uffi:def-constant +2^64+ 18446744073709551616)
 (uffi:def-constant +2^32-1+ (1- +2^32+))
