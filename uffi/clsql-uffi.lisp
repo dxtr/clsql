@@ -78,12 +78,26 @@
      (radix :int))
   :returning :unsigned-long-long)
 
+#-windows
+(uffi:def-function ("strtoll" c-strtoll)
+    ((str (* :unsigned-char))
+     (endptr (* :unsigned-char))
+     (radix :int))
+  :returning :long-long)
+
 #+windows
 (uffi:def-function ("_strtoui64" c-strtoull)
     ((str (* :unsigned-char))
      (endptr (* :unsigned-char))
      (radix :int))
   :returning :unsigned-long-long)
+
+#+windows
+(uffi:def-function ("_strtoi64" c-strtoll)
+    ((str (* :unsigned-char))
+     (endptr (* :unsigned-char))
+     (radix :int))
+  :returning :long-long)
 
 (uffi:def-function "atol"
     ((str (* :unsigned-char)))
@@ -127,50 +141,33 @@
            (type char-ptr-def char-ptr))
   (c-strtoull char-ptr uffi:+null-cstring-pointer+ 10))
 
+(defun strtoll (char-ptr)
+  (declare (optimize (speed 3) (safety 0) (space 0))
+           (type char-ptr-def char-ptr))
+  (c-strtoll char-ptr uffi:+null-cstring-pointer+ 10))
+
 (defun convert-raw-field (char-ptr type &key length encoding)
- (declare (optimize (speed 3) (safety 0) (space 0))
-          (type char-ptr-def char-ptr))
- (cond
-   ((uffi:null-pointer-p char-ptr)
-    nil)
-   (t
+  (declare (optimize (speed 3) (safety 0) (space 0))
+           (type char-ptr-def char-ptr))
+  (unless (uffi:null-pointer-p char-ptr)
     (case type
-      (:double
-       (atof char-ptr))
-      (:int
-       (atol char-ptr))
-      (:int32
-       (atoi char-ptr))
-      (:uint32
-       (strtoul char-ptr))
-      (:uint
-       (strtoul char-ptr))
-      ((:int64 :uint64)
-       (strtoull char-ptr)
-       #|(uffi:with-foreign-object (high32-ptr :unsigned-int)
-         (let ((low32 (atol64 char-ptr high32-ptr))
-               (high32 (uffi:deref-pointer high32-ptr :unsigned-int)))
-           (if (zerop high32)
-               low32
-               (make-64-bit-integer high32 low32))))|#
-)
+      (:double (atof char-ptr))
+      (:int (atol char-ptr))
+      (:int32 (atoi char-ptr))
+      (:uint32 (strtoul char-ptr))
+      (:uint (strtoul char-ptr))
+      (:int64 (strtoll char-ptr))
+      (:uint64 (strtoull char-ptr))
       (:blob
        (if length
            (uffi:convert-from-foreign-usb8 char-ptr length)
            (error "Can't return blob since length is not specified.")))
       (t
-       (if encoding
-           (if length
-               (uffi:convert-from-foreign-string char-ptr
-                                                 :null-terminated-p nil
-                                                 :length length
-                                                 :encoding encoding)
-               (uffi:convert-from-foreign-string char-ptr
-                                                 :null-terminated-p t
-                                                 :encoding encoding))
-           (if length
-               (uffi:convert-from-foreign-string char-ptr
-                                                 :null-terminated-p nil
-                                                 :length length)
-               (uffi:convert-from-foreign-string char-ptr
-                                                 :null-terminated-p t))))))))
+       ;; NB: this used to manually expand the arg list based on if length and encoding
+       ;; were provided.  If this is required the macro is aweful and should be rewritten
+       ;; to accept nil args (as it appears to)
+       (uffi:convert-from-foreign-string
+        char-ptr
+        :null-terminated-p (null length)
+        :length length
+        :encoding encoding)))))

@@ -226,6 +226,22 @@
                        "mismatch on randomized bigtext(~a) inserted: ~s returned: ~s" len str a))
              ))))
      nil)
+
+    (deftest :basic/reallybigintegers/1
+        (with-dataset *ds-reallybigintegers*
+          (let ((a (1- (expt 2 64)))
+                (b (- (expt 2 64) 2))
+                (c (expt 2 63))
+                (d (expt 2 62)))
+            (query
+             (format nil "INSERT INTO testreallybigintegers
+                              VALUES (~A, ~A, ~A, ~A)"
+                     a b c d))
+            (let ((results
+                    (query
+                     (format nil "SELECT * FROM testreallybigintegers"))))
+              (equal `(,a ,b ,c ,d) (car results)))))
+      t)
     ))
 
 
@@ -285,3 +301,14 @@
 (def-dataset *ds-bigtext*
   (:setup "CREATE TABLE testbigtext(a varchar(7500))")
   (:cleanup "DROP TABLE testbigtext"))
+
+(def-dataset *ds-reallybigintegers*
+  (:setup (lambda ()
+            (ignore-errors
+             (clsql:execute-command "DROP TABLE testreallybigintegers"))
+            (clsql:execute-command
+             "CREATE TABLE testreallybigintegers( a BIGINT UNSIGNED,
+                                                  b BIGINT UNSIGNED,
+                                                  c BIGINT UNSIGNED,
+                                                  d BIGINT UNSIGNED )")))
+  (:cleanup "DROP TABLE testreallybigintegers"))
