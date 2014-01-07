@@ -7,7 +7,7 @@ tests so that all pass.  In the interim, I would like know that I am not
 increasing the number of failing
 
 :mysql
-1 out of 298 total tests failed: :FDDL/CACHE-TABLE-QUERIES/1.
+1 out of 301 total tests failed: :FDDL/CACHE-TABLE-QUERIES/1.
 
 :odbc MSSQL2000/5
 1 out of 265 total tests failed: :FDDL/CACHE-TABLE-QUERIES/1.
@@ -35,10 +35,10 @@ or not correctly skipping those tests
    :TIME/PG/FDML/USEC, :FDML/SELECT/36, :FDDL/CACHE-TABLE-QUERIES/1.
 
 :sqlite3
-9 out of 267 total tests failed: :FDDL/CACHE-TABLE-QUERIES/1, :FDDL/INDEX/3, 
+8 out of 300 total tests failed: :FDDL/CACHE-TABLE-QUERIES/1, :FDDL/INDEX/3, 
    :FDDL/ATTRIBUTES/8, :FDDL/ATTRIBUTES/7, :FDDL/ATTRIBUTES/6, 
-   :FDDL/ATTRIBUTES/5, :FDDL/ATTRIBUTES/4, :FDDL/ATTRIBUTES/3, 
-   :FDDL/ATTRIBUTES/2.
+   :FDDL/ATTRIBUTES/5, :FDDL/ATTRIBUTES/4, :FDDL/ATTRIBUTES/3.
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 Version 3.0.0 run on August 3, 2004 on x86, x86_64, and PowerPC platforms
@@ -92,29 +92,3 @@ SQLITE: All 224 tests passed (ppc, OpenMCL).
 ODBC/POSTGRESQL: All 232 tests passed (ppc, OpenMCL).
 ODBC/MYSQL: All 217 tests passed (ppc, OpenMCL).
 
-----
-SQLITE3 After vityok, aaron burrows patches
-
-13 out of 300 total tests failed: :FDDL/CACHE-TABLE-QUERIES/1, :FDDL/INDEX/3, 
-   :FDDL/VIEW/2, :FDDL/ATTRIBUTES/8, :FDDL/ATTRIBUTES/7, :FDDL/ATTRIBUTES/6, 
-   :FDDL/ATTRIBUTES/5, :FDDL/ATTRIBUTES/4, :FDDL/ATTRIBUTES/3, 
-   :FDDL/ATTRIBUTES/2, :FDDL/ATTRIBUTES/1, :FDDL/TABLE/3, :FDDL/TABLE/1.
-Tests skipped:
-  TIME/PG/OODML/USEC         Postgres specific test. 
-  TIME/PG/OODML/NO-USEC      Postgres specific test. 
-  TIME/PG/FDML/USEC          Postgres specific test. 
-  OODML/SELECT/5             boolean where not supported. 
-  FDML/SELECT/33             not supported by sqlite3. 
-  FDML/SELECT/32             not supported by sqlite3. 
-  FDML/SELECT/21             not supported by sqlite3. 
-  FDML/SELECT/11             boolean where not supported. 
-  FDML/SELECT/10             not supported by sqlite3. 
-  FDML/SELECT/1              fancy math not supported. 
-  FDDL/OWNER/SEQUENCE        table ownership not supported. 
-  FDDL/OWNER/INDEX           table ownership not supported. 
-  FDDL/OWNER/ATTRIBUTE-TYPES table ownership not supported. 
-  FDDL/OWNER/ATTRIBUTES      table ownership not supported. 
-  FDDL/OWNER/TABLE           table ownership not supported. 
-  FDDL/OWNER/1               table ownership not supported. 
-  FDDL/VIEW/4                not supported by sqlite3. 
-  CONNECTION/QUERY-COMMAND   known to work only in MySQL as yet. 
