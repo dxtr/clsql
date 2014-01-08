@@ -235,7 +235,8 @@
       (let ((test (second test-form)))
         (cond
 	  ((and (not (eql db-underlying-type :mysql))
-		(clsql-sys:in test :connection/query-command))
+		(clsql-sys:in test :connection/query-command
+                              :basic/reallybigintegers/1))
 	   (push (cons test "known to work only in MySQL as yet.") skip-tests))
           ((and (null (clsql-sys:db-type-has-views? db-underlying-type))
                 (clsql-sys:in test :fddl/view/1 :fddl/view/2 :fddl/view/3 :fddl/view/4))
@@ -262,8 +263,7 @@
           ((and (eql *test-database-type* :sqlite3)
                 (clsql-sys:in test :fddl/view/4 :fdml/select/10
                               :fdml/select/21 :fdml/select/32
-                              :fdml/select/33
-                              :basic/reallybigintegers/1))
+                              :fdml/select/33))
            (push (cons test "not supported by sqlite3.") skip-tests))
           ((and (not (clsql-sys:db-type-has-bigint? db-type))
                 (clsql-sys:in test :basic/bigint/1))
