@@ -1,7 +1,7 @@
 2014-01-07 Russ Tyndall <russ@acceleration.net>
 	* clsql-uffi.lisp, sqlite3 auto-increment support
 	* clsql-uffi.lisp, test-basic.lisp, fixes related to unsigned vs
-          signed ints (thanks Aaron Burrows)
+          signed ints (thanks Aaron Burrow)
 	* cleaning and testing
 
 2013-09-27 Russ Tyndall <russ@acceleration.net>
