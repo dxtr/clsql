@@ -391,7 +391,9 @@
   (let* ((classes-and-slots (view-classes-and-storable-slots instance))
          (vd (choose-database-for-instance instance database)))
     (labels ((do-update (class-and-slots)
-               (let* ((select-list (make-select-list class-and-slots :do-joins-p nil))
+               (let* ((select-list (make-select-list class-and-slots
+                                                     :do-joins-p nil
+                                                     :database database))
                       (view-table (sql-table select-list))
                       (view-qual (key-qualifier-for-instance
                                   instance :database vd
@@ -986,7 +988,13 @@
 (defmethod sql-table ((o select-list))
   (sql-expression :table (view-table o)))
 
-(defun make-select-list (class-and-slots &key (do-joins-p nil))
+(defmethod filter-select-list ((c clsql-sys::standard-db-object)
+                               (sl clsql-sys::select-list)
+                               database)
+  sl)
+
+(defun make-select-list (class-and-slots &key (do-joins-p nil)
+                                         (database *default-database*))
   "Make a select-list for the current class (or class-and-slots) object."
   (let* ((class-and-slots
            (etypecase class-and-slots
@@ -1006,18 +1014,21 @@
               finally (return (values slots sqls)))
       (unless slots
         (error "No slots of type :base in view-class ~A" (class-name class)))
-      (make-instance
-       'select-list
-       :view-class class
-       :select-list sqls
-       :slot-list slots
-       :join-slots join-slots
-       ;; only do a single layer of join objects
-       :joins (when do-joins-p
-                (loop for js in join-slots
-                      collect (make-select-list
-                               (join-slot-class js)
-                               :do-joins-p nil)))))))
+      (let ((sl (make-instance
+                 'select-list
+                 :view-class class
+                 :select-list sqls
+                 :slot-list slots
+                 :join-slots join-slots
+                 ;; only do a single layer of join objects
+                 :joins (when do-joins-p
+                          (loop for js in join-slots
+                                collect (make-select-list
+                                         (join-slot-class js)
+                                         :do-joins-p nil
+                                         :database database))))))
+        (filter-select-list (make-instance class) sl database)
+        sl))))
 
 (defun full-select-list ( select-lists )
   "Returns a list of sql-ref of things to select for the given classes
@@ -1099,7 +1110,7 @@
                  appending (loop for slot in (immediate-join-slots class)
                                  collect (join-slot-qualifier class slot))))
          (select-lists (loop for class in sclasses
-                             collect (make-select-list class :do-joins-p t)))
+                             collect (make-select-list class :do-joins-p t :database database)))
          (full-select-list (full-select-list select-lists))
          (where (clsql-ands (append (listify where) (listify join-where))))
          #|

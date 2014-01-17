@@ -382,6 +382,11 @@
          #:*default-string-length*
 
          ;; OODML (oodml.lisp)
+         #:select-list
+         #:filter-select-list
+         #:slot-list
+         #:joins
+         #:join-slots
          #:instance-refreshed
          #:update-objects-joins
          #:*default-update-objects-max-len*

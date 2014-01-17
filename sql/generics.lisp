@@ -198,3 +198,9 @@ the arguments EXPR and DATABASE."))
   (:documentation "Given a column constraint returns its
 database-specific name. For example, auto-increment constraints can
 have different names in different database engines."))
+
+(defgeneric filter-select-list ( view-class clsql-sys::select-list database)
+  (:documentation
+   "Gives fine grained control over sql to be executed and mapped to slots
+    called with a dummy instance (so that class precedence can be used)")
+  )

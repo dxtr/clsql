@@ -1,3 +1,7 @@
+2014-01-17 Russ Tyndall <russ@acceleration.net>
+	* oodml.lisp, generics.lisp - added filter-select-list generic
+	  to allow fine grained control of generated query/object mappings
+	
 2014-01-07 Russ Tyndall <russ@acceleration.net>
 	* clsql-uffi.lisp, sqlite3 auto-increment support
 	* clsql-uffi.lisp, test-basic.lisp, fixes related to unsigned vs
