@@ -308,14 +308,20 @@
    the public api"
   (update-record-from-slots obj slot :database database))
 
-(defmethod view-classes-and-storable-slots (class)
+(defmethod view-classes-and-storable-slots (class &key to-database-p)
   "Get a list of all the tables we need to update and the slots on them
 
    for non normalized classes we return the class and all its storable slots
 
    for normalized classes we return a list of direct slots and the class they
    came from for each normalized view class
+
+   to-database-p is provided so that we can read / write different data
+   to the database in different circumstances
+   (specifically clsql-helper:dirty-db-slots-mixin which only updates slots
+    that have changed )
   "
+  (declare (ignore to-database-p))
   (setf class (to-class class))
   (let* (rtns)
     (labels ((storable-slots (class)
@@ -359,7 +365,7 @@
    view-database slot on the object is nil then the object is assumed to be
    new and is inserted"
   (let ((database (choose-database-for-instance obj database))
-        (classes-and-slots (view-classes-and-storable-slots obj)))
+        (classes-and-slots (view-classes-and-storable-slots obj :to-database-p t)))
     (loop for class-and-slots in classes-and-slots
           do (%update-instance-helper class-and-slots obj database))
     (setf (slot-value obj 'view-database) database)
@@ -388,7 +394,8 @@
          Can we just call build-objects?, update-objects-joins?
   "
 
-  (let* ((classes-and-slots (view-classes-and-storable-slots instance))
+  (let* ((classes-and-slots (view-classes-and-storable-slots
+                             instance :to-database-p nil))
          (vd (choose-database-for-instance instance database)))
     (labels ((do-update (class-and-slots)
                (let* ((select-list (make-select-list class-and-slots
@@ -1003,7 +1010,8 @@
               ;; find the first class with slots for us to select (this should be)
               ;; the first of its classes / parent-classes with slots
               (first (reverse (view-classes-and-storable-slots
-                               (to-class class-and-slots)))))))
+                               (to-class class-and-slots)
+                                :to-database-p nil))))))
          (class (view-class class-and-slots))
          (join-slots (when do-joins-p (immediate-join-slots class))))
     (multiple-value-bind (slots sqls)

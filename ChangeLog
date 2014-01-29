@@ -1,4 +1,13 @@
 2014-01-17 Russ Tyndall <russ@acceleration.net>
+	* oodml.lisp, generics.lisp - added
+	clsql-sys::view-classes-and-storable-slots generic (added method
+	previously).  Also added to-database-p keyword to allow overrides
+	to distinguish between the two situations. Mostly so that
+	clsql-helper:dirty-slots-mixin can filter slots when writing
+	values to the database but still allow all slots to be read from
+	the database
+
+2014-01-17 Russ Tyndall <russ@acceleration.net>
 	* oodml.lisp, generics.lisp - added filter-select-list generic
 	  to allow fine grained control of generated query/object mappings
 	

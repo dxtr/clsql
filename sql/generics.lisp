@@ -204,3 +204,9 @@ have different names in different database engines."))
    "Gives fine grained control over sql to be executed and mapped to slots
     called with a dummy instance (so that class precedence can be used)")
   )
+
+(defgeneric view-classes-and-storable-slots (view-class &key to-database-p)
+  (:documentation "A method that collects all the classes and storable slots
+   that need to be read from or written to the database.
+   to-database-p should be T if we are writing this object to the database
+   and nil when we are reading this object from the database"))
