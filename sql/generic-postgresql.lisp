@@ -263,7 +263,7 @@
       (when seq
         (setf const (remove :auto-increment const))
         (unless (member :default const)
-          (let* ((next (format nil "nextval('~a')" (escaped-database-identifier seq))))
+          (let* ((next (format nil " nextval('~a')" (escaped-database-identifier seq))))
             (setf const (append const (list :default next))))))
       (append cdef const))))
 

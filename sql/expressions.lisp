@@ -1108,7 +1108,9 @@ uninclusive, and the args from that keyword to the end."
      (ecase (database-underlying-type database)
        (:mssql "IDENTITY (1,1)")
        ((:sqlite :sqlite3) "PRIMARY KEY AUTOINCREMENT")
-       (:mysql "AUTO_INCREMENT")))
+       (:mysql "AUTO_INCREMENT")
+       ;; this is modeled as a datatype instead of a constraint
+       (:postgresql "")))
     ;; everything else just get the name
     (T (string-upcase (symbol-name constraint)))))
 

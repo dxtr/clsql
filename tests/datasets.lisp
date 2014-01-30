@@ -67,30 +67,39 @@ should we debug (T) or just print and quit.")
 
 (defun %dataset-init (name)
   "Run initialization code and fill database for given dataset."
-  	;;find items that looks like '(:setup ...),
-	;; dispatch the rest.
-	(let ((setup (rest (find :setup name :key #'first)))
-	      (sqldata (rest (find :sqldata name :key #'first)))
-	      (objdata (rest (find :objdata name :key #'first))))
-	  (when setup
-	    (%dataset-dispatch setup))
-	  (when sqldata
-	    ;;run raw sql insert statements
-	    (destructuring-bind (table-name columns &rest values-list) sqldata
-	      (dolist (v values-list)
-		(clsql-sys:execute-command
-		 (format nil
-			 "INSERT INTO ~a (~a) VALUES (~a)"
-			 table-name columns v)))))
-	  (when objdata
-	    ;;presumed to be view-class objects, force them to insert.
-	    (dolist (o objdata)
-	      (setf (slot-value o 'clsql-sys::view-database) nil)
-	      (clsql-sys:update-records-from-instance o)))))
+  ;;find items that looks like '(:setup ...),
+  ;; dispatch the rest.
+  (let ((*backend-warning-behavior*
+          (typecase *default-database*
+            (clsql-sys:generic-postgresql-database
+             :ignore)
+            (t *backend-warning-behavior*)))
+        (setup (rest (find :setup name :key #'first)))
+        (sqldata (rest (find :sqldata name :key #'first)))
+        (objdata (rest (find :objdata name :key #'first))))
+    (when setup
+      (handler-bind ((warning
+                       (lambda (c)
+                         (when (eql :ignore *backend-warning-behavior*)
+                           (muffle-warning c)))))
+        (%dataset-dispatch setup)))
+    (when sqldata
+      ;;run raw sql insert statements
+      (destructuring-bind (table-name columns &rest values-list) sqldata
+        (dolist (v values-list)
+          (clsql-sys:execute-command
+           (format nil
+                   "INSERT INTO ~a (~a) VALUES (~a)"
+                   table-name columns v)))))
+    (when objdata
+      ;;presumed to be view-class objects, force them to insert.
+      (dolist (o objdata)
+        (setf (slot-value o 'clsql-sys::view-database) nil)
+        (clsql-sys:update-records-from-instance o)))))
 
 (defun %dataset-cleanup (name)
   "Run cleanup code associated with the given dataset."
-  (restart-case 
+  (restart-case
       (handler-bind ((error #'generic-error))
 	(let ((cleanup (rest (find :cleanup name :key #'first))))
 	  (when cleanup

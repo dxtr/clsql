@@ -1,4 +1,36 @@
-2014-01-17 Russ Tyndall <russ@acceleration.net>
+2014-01-30 Russ Tyndall <russ@acceleration.net>
+	* generic-odbc.lisp, ooddl.lisp, generic-postgresql.lisp,
+	test-init.lisp, ds-nodes.lisp, generic-odbc.lisp, odbc-sql.lisp
+
+	auto-increment-column support improvement (mssql esp, now will
+	auto-fill after insert). Use +auto-increment-names+ to determine
+	auto-increment-column-p.
+
+	This triggered much test failing as regards normalized classes /
+	autoincrement primary key stuff.
+
+	New odbc-postgresql-database sub-type
+
+	POSSIBLY BREAKING CHANGES:
+	1 ) Previously all classes in a normalized heirachy had their p-key
+	marked as "auto-increment".  Usually auto-increment means a key
+	supplied by the database system, so this was decidedly
+	non-standard usage (clsql is explicitly providing the key for all
+	normalized subclasses of any given parent see ds-nodes.lisp). Some
+	RDMS will not allow insertion/updates of autoincrement columns
+	without hoop jumping and, as it doesnt really make much sense, I
+	removed the "auto-increment" aspects of normalized sub-classes.
+	Now the primary keys are chained regardless. The parent-most key
+	can be autoincrement or not.
+
+	2 ) ODBC Postgresql connections are now both GENERIC-ODBC-DATABASE
+	and GENERIC-POSTGRESQL-DATABASE.  Probably not a widely used path,
+	but this change allows most of the previously failing tests to
+	pass on this backend (we now format stuff correctly for postgres).
+	I anticipate this probably is not perfect yet (IE: I probably
+	missed something)
+
+2014-01-29 Russ Tyndall <russ@acceleration.net>
 	* oodml.lisp, generics.lisp - added
 	clsql-sys::view-classes-and-storable-slots generic (added method
 	previously).  Also added to-database-p keyword to allow overrides

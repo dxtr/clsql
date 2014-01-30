@@ -594,7 +594,11 @@
           Defaults to nil, i.e. non-normalized schemas. When true,
           SQL database tables that map to this class and parent
           classes are joined on their primary keys to get the full
-          set of database columns for this class.
+          set of database columns for this class.  This means that 
+          the primary key of the base class will be copied to all 
+          subclasses as we insert so that all parent classes of an 
+          instance will have the same value in their primary key slots
+          (see tests/ds-nodes.lisp and oodml.lisp)
 	    </para>
 	  </listitem>
 	</itemizedlist>

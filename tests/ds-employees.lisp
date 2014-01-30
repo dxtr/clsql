@@ -177,13 +177,8 @@
 
 (defun initialize-ds-employees ()
   ;;  (start-sql-recording :type :both)
-  (let ((*backend-warning-behavior*
-         (if (member *test-database-type* '(:postgresql :postgresql-socket))
-             :ignore
-	     :warn)))
-    (mapc #'clsql:create-view-from-class
-	  '(employee company address employee-address)))
-    
+  (mapc #'clsql:create-view-from-class
+        '(employee company address employee-address))
 
   (setq *test-start-utime* (get-universal-time))
   (let* ((*db-auto-sync* t)

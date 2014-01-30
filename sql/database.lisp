@@ -193,7 +193,9 @@ and signal an sql-user-error if they don't match. This function
 is called by database backends."
   `(handler-case
     (destructuring-bind ,template ,connection-spec
-      (declare (ignore ,@(remove '&optional template)))
+      (declare (ignore ,@(remove-if
+                          (lambda (x) (member x '(&key &rest &optional)))
+                          template)))
       t)
     (error ()
      (error 'sql-user-error

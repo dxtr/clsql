@@ -20,7 +20,8 @@
    (close-query-fn :reader close-query-fn)
    (fetch-row :reader fetch-row-fn)
    (list-all-database-tables-fn :reader list-all-database-tables-fn)
-   (list-all-table-columns-fn :reader list-all-table-columns-fn))
+   (list-all-table-columns-fn :reader list-all-table-columns-fn)
+   (odbc-db-type :accessor database-odbc-db-type :initarg :odbc-db-type ))
   (:documentation "Encapsulate same behavior across odbc and aodbc backends."))
 
 (defmethod initialize-instance :after ((db generic-odbc-database)
@@ -246,3 +247,17 @@ on schema since that's what tends to be exposed. Some DBs like mssql
                           (when size (parse-integer size))
                           (when precision (parse-integer precision))
                           (when scale (parse-integer scale))))))))
+
+(defmethod database-last-auto-increment-id
+    ((database generic-odbc-database) table column)
+  (case (database-underlying-type database)
+    (:mssql
+     (first (clsql:query "SELECT SCOPE_IDENTITY()"
+                         :flatp t
+                         :database database
+                         :result-types '(:int))))
+    (t (if (next-method-p)
+           (call-next-method)))))
+
+(defmethod clsql-sys:db-type-has-auto-increment? ((db-underlying-type (eql :mssql)))
+  t)

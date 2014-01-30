@@ -1,43 +1,29 @@
-Note from Russ Tyndall <russ@acceleration.net> 2012-11-24 :
+Note from Russ Tyndall <russ@acceleration.net> 2013-01-30 :
 
 This is the current results of running the test suite against all the database
 backends I have accessible, on SBCL / UBUNTU64bit.  It would be great to
 continue improving the test suite and skip tests that reliably fail, improve
 tests so that all pass.  In the interim, I would like know that I am not
-increasing the number of failing
+increasing the number of failing tests
 
 :mysql
 1 out of 301 total tests failed: :FDDL/CACHE-TABLE-QUERIES/1.
 
 :odbc MSSQL2000/5
-1 out of 268 total tests failed: :FDDL/CACHE-TABLE-QUERIES/1.
+1 out of 298 total tests failed: :FDDL/CACHE-TABLE-QUERIES/1.
 
 :odbc postgres
-32 out of 312 total tests failed: :OODML/DB-AUTO-SYNC/4, :OODML/DB-AUTO-SYNC/3, 
-   :OODML/UPDATE-INSTANCE/7, :OODML/UPDATE-INSTANCE/6, :OODML/UPDATE-INSTANCE/5, 
-   :OODML/UPDATE-INSTANCE/4, :OODML/UPDATE-INSTANCE/3, :OODML/UPDATE-RECORDS/12, 
-   :OODML/UPDATE-RECORDS/11, :OODML/UPDATE-RECORDS/9-SLOTS, 
-   :OODML/UPDATE-RECORDS/9, :OODML/UPDATE-RECORDS/8, :OODML/UPDATE-RECORDS/7, 
-   :OODML/UPDATE-RECORDS/6, :OODML/UPDATE-RECORDS/5-SLOTS, 
-   :OODML/UPDATE-RECORDS/5, :OODML/UPDATE-RECORDS/4-SLOTS, 
-   :OODML/UPDATE-RECORDS/4, :OODML/SELECT/23, :OODML/SELECT/22, 
-   :OODML/SELECT/21, :OODML/SELECT/20, :OODML/SELECT/19, :OODML/SELECT/18, 
-   :OODML/SELECT/17, :OODML/SELECT/16, :OODML/SELECT/15, :OODML/SELECT/14, 
-   :OODML/SELECT/13, :OODML/SELECT/12, :FDML/SELECT/36, 
-   :FDDL/CACHE-TABLE-QUERIES/1
-
-Most of these seem to have to do with not correctly dispatching AUTO_INCREMENT
-or not correctly skipping those tests
-
+2 out of 311 total tests failed: :FDML/SELECT/36, :FDDL/CACHE-TABLE-QUERIES/1.
 
 :postgres-socket :postgres-socket-3
 5 out of 300 total tests failed: :TIME/PG/OODML/USEC, :TIME/PG/OODML/NO-USEC, 
    :TIME/PG/FDML/USEC, :FDML/SELECT/36, :FDDL/CACHE-TABLE-QUERIES/1.
 
 :sqlite3
-8 out of 300 total tests failed: :FDDL/CACHE-TABLE-QUERIES/1, :FDDL/INDEX/3, 
+9 out of 300 total tests failed: :FDDL/CACHE-TABLE-QUERIES/1, :FDDL/INDEX/3, 
    :FDDL/ATTRIBUTES/8, :FDDL/ATTRIBUTES/7, :FDDL/ATTRIBUTES/6, 
-   :FDDL/ATTRIBUTES/5, :FDDL/ATTRIBUTES/4, :FDDL/ATTRIBUTES/3.
+   :FDDL/ATTRIBUTES/5, :FDDL/ATTRIBUTES/4, :FDDL/ATTRIBUTES/3, 
+   :FDDL/ATTRIBUTES/2.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

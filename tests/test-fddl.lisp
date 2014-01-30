@@ -107,7 +107,7 @@ B varchar(32))")
      (progn
        (let ((*backend-warning-behavior*
 	      (if (member *test-database-type*
-			  '(:postgresql :postgresql-socket))
+			  '(:postgresql :postgresql-socket :postgresql-socket3))
 		  :ignore
 		  :warn)))
 	 (case *test-database-underlying-type*
@@ -129,7 +129,7 @@ B varchar(32))")
      (progn
        (let ((*backend-warning-behavior*
 	      (if (member *test-database-type*
-			  '(:postgresql :postgresql-socket))
+			  '(:postgresql :postgresql-socket :postgresql-socket3))
 		  :ignore
 		  :warn)))
 	 (clsql:create-table [foo] '(([bar] integer :not-null)

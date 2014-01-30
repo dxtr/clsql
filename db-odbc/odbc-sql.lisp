@@ -24,7 +24,11 @@
 ;; ODBC interface
 
 (defclass odbc-database (generic-odbc-database)
-  ((odbc-db-type :accessor database-odbc-db-type)))
+  ())
+
+(defclass odbc-postgresql-database (generic-odbc-database
+                                    generic-postgresql-database)
+  ())
 
 (defmethod database-name-from-spec (connection-spec
                                     (database-type (eql :odbc)))
@@ -40,22 +44,30 @@
   (destructuring-bind (dsn user password &key connection-string (completion :no-prompt) window-handle) connection-spec
     (handler-case
         (let ((db (make-instance 'odbc-database
-                                 :name (database-name-from-spec connection-spec :odbc)
-                                 :database-type :odbc
-                                 :connection-spec connection-spec
-                                 :dbi-package (find-package '#:odbc-dbi)
-                                 :odbc-conn
-                                 (odbc-dbi:connect :user user
-                                                   :password password
-                                                   :data-source-name dsn
-                                                   :connection-string connection-string
-                                                   :completion completion
-                                                   :window-handle window-handle))))
+                   :name (database-name-from-spec connection-spec :odbc)
+                   :database-type :odbc
+                   :connection-spec connection-spec
+                   :dbi-package (find-package '#:odbc-dbi)
+                   :odbc-conn
+                   (odbc-dbi:connect :user user
+                                     :password password
+                                     :data-source-name dsn
+                                     :connection-string connection-string
+                                     :completion completion
+                                     :window-handle window-handle))))
           (store-type-of-connected-database db)
           ;; Ensure this database type is initialized so can check capabilities of
           ;; underlying database
           (initialize-database-type :database-type database-type)
-          db)
+          (if (eql :postgresql (database-underlying-type db))
+              (make-instance 'odbc-postgresql-database
+                             :name (database-name-from-spec connection-spec :odbc)
+                             :database-type :odbc
+                             :connection-spec connection-spec
+                             :dbi-package (find-package '#:odbc-dbi)
+                             :odbc-db-type :postgresql
+                             :odbc-conn (clsql-sys::odbc-conn db))
+              db))
       #+ignore
       (error ()         ;; Init or Connect failed
         (error 'sql-connection-error
@@ -63,8 +75,8 @@
                :connection-spec connection-spec
                :message "Connection failed")))))
 
-(defmethod database-underlying-type ((database odbc-database))
-  (database-odbc-db-type database))
+(defmethod database-underlying-type ((database generic-odbc-database))
+  (clsql-sys::database-odbc-db-type database))
 
 (defun store-type-of-connected-database (db)
   (let* ((odbc-conn (clsql-sys::odbc-conn db))
@@ -90,7 +102,7 @@
            ((or (search "oracle" server-name :test #'char-equal)
                 (search "oracle" dbms-name :test #'char-equal))
             :oracle))))
-    (setf (database-odbc-db-type db) type)))
+    (setf (clsql-sys::database-odbc-db-type db) type)))
 
 
 

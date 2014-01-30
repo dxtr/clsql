@@ -780,13 +780,13 @@
 	(progn
 	  (clsql:update-records [node]
 				:av-pairs '(([title] "altered title"))
-				:where [= [node-id] 9])
+				:where [= [node-id] (node-id loc2)])
 	  (clsql:update-slot-from-record loc2 'title)
 	  (print-loc loc2))
 	(progn
 	  (clsql:update-records [subloc]
 				:av-pairs '(([loc] "altered loc"))
-				:where [= [subloc-id] 11])
+				:where [= [subloc-id] (subloc-id subloc2)])
 	  (clsql:update-slot-from-record subloc2 'loc)
 	  (print-subloc subloc2)))))
   "9: location-2" "11: second subloc"

@@ -31,20 +31,20 @@
 
 (def-view-class setting (node)
   ((setting-id :accessor setting-id :initarg :setting-id
-               :type integer :db-kind :key :db-constraints (:not-null :auto-increment))
+               :type integer :db-kind :key :db-constraints (:not-null ))
    (vars :accessor vars :initarg :vars :type (varchar 240)))
   (:normalizedp t))
 
 (def-view-class user (node)
   ((user-id :accessor user-id :initarg :user-id
-            :type integer :db-kind :key :db-constraints (:not-null :auto-increment))
+            :type integer :db-kind :key :db-constraints (:not-null ))
    (nick :accessor nick :initarg :nick :type (varchar 64)))
   (:base-table "nodeuser")
   (:normalizedp t))
 
 (def-view-class theme (setting)
   ((theme-id :accessor theme-id :initarg :theme-id
-             :type integer :db-kind :key :db-constraints (:not-null :auto-increment))
+             :type integer :db-kind :key :db-constraints (:not-null ))
    (doc :accessor doc :initarg :doc :type (varchar 240)))
   (:normalizedp t))
 
@@ -56,7 +56,7 @@
 
 (def-view-class subloc (location)
   ((subloc-id :accessor subloc-id :initarg :subloc-id
-	      :type integer :db-kind :key :db-constraints (:not-null :auto-increment))
+	      :type integer :db-kind :key :db-constraints (:not-null ))
    (loc :accessor loc :initarg :loc :type (varchar 64)))
   (:normalizedp t))
 
@@ -64,46 +64,42 @@
 
 (defun initialize-ds-nodes ()
   ;;  (start-sql-recording :type :both)
-  (let ((*backend-warning-behavior*
-         (if (member *test-database-type* '(:postgresql :postgresql-socket))
-             :ignore
-	     :warn)))
-    (mapc #'clsql:create-view-from-class
-	  '(node setting user theme location subloc)))
+  (mapc #'clsql:create-view-from-class
+        '(node setting user theme location subloc))
 
   (setq *test-start-utime* (get-universal-time))
   (let* ((*db-auto-sync* t))
     (setf  node (make-instance 'node
-                              :title "Bare node")
-          setting1 (make-instance 'setting
-                                  :title "Setting1"
-                                  :vars "var 1")
-          setting2 (make-instance 'setting
-                                  :title "Setting2"
-                                  :vars "var 2")
-          user1 (make-instance 'user
-                               :title "user-1"
-                               :nick "first user")
-          user2 (make-instance 'user
-                               :title "user-2"
-                               :nick "second user")
-          theme1 (make-instance 'theme
-                                :title "theme-1"
-                                :vars "empty"
-                                :doc "first theme")
-          theme2 (make-instance 'theme
-                                :title "theme-2"
-                                :doc "second theme")
-	  loc1 (make-instance 'location
-                              :title "location-1")
-	  loc2 (make-instance 'location
-                              :title "location-2")
-	  subloc1 (make-instance 'subloc
-				 :title "subloc-1"
-				 :loc "a subloc")
-	  subloc2 (make-instance 'subloc
-				 :title "subloc-2"
-				 :loc "second subloc"))))
+                               :title "Bare node")
+           setting1 (make-instance 'setting
+                                   :title "Setting1"
+                                   :vars "var 1")
+           setting2 (make-instance 'setting
+                                   :title "Setting2"
+                                   :vars "var 2")
+           user1 (make-instance 'user
+                                :title "user-1"
+                                :nick "first user")
+           user2 (make-instance 'user
+                                :title "user-2"
+                                :nick "second user")
+           theme1 (make-instance 'theme
+                                 :title "theme-1"
+                                 :vars "empty"
+                                 :doc "first theme")
+           theme2 (make-instance 'theme
+                                 :title "theme-2"
+                                 :doc "second theme")
+           loc1 (make-instance 'location
+                               :title "location-1")
+           loc2 (make-instance 'location
+                               :title "location-2")
+           subloc1 (make-instance 'subloc
+                                  :title "subloc-1"
+                                  :loc "a subloc")
+           subloc2 (make-instance 'subloc
+                                  :title "subloc-2"
+                                  :loc "second subloc"))))
 
 
 

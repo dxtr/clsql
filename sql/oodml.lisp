@@ -219,19 +219,21 @@
 
 (defun update-auto-increments-keys (class obj database)
   " handle pulling any autoincrement values into the object
-   if normalized and we now that all the "
+    Also handles normalized key chaining"
   (let ((pk-slots (keyslots-for-class class))
         (table (view-table class))
         new-pk-value)
-    (labels ((do-update (slot)
-               (when (and (null (easy-slot-value obj slot))
-                          (auto-increment-column-p slot database))
-                 (update-slot-from-db-value
-                  obj slot
-                  (or new-pk-value
-                      (setf new-pk-value
-                            (database-last-auto-increment-id
-                             database table slot))))))
+    (labels ((do-update (slot &aux (val (easy-slot-value obj slot)))
+               (if val
+                   (setf new-pk-value val)
+                   (update-slot-from-db-value
+                    obj slot
+                    (or new-pk-value
+                        (setf new-pk-value
+                              (database-last-auto-increment-id
+                               database table slot))))))
+             ;; NB: This interacts very strangely with autoincrement keys
+             ;; (see changelog 2014-01-30)
              (chain-primary-keys (in-class)
                "This seems kindof wrong, but this is mostly how it was working, so
                   its here to keep the normalized code path working"
@@ -277,6 +279,7 @@
            (insert-records :into table-sql
                            :av-pairs avps
                            :database database)
+           ;; also handles normalized-class key chaining
            (update-auto-increments-keys view-class obj database)
            ;; we dont set view database here, because there could be
            ;; N of these for each call to update-record-from-* because
@@ -321,12 +324,14 @@
    (specifically clsql-helper:dirty-db-slots-mixin which only updates slots
     that have changed )
   "
-  (declare (ignore to-database-p))
   (setf class (to-class class))
   (let* (rtns)
     (labels ((storable-slots (class)
                (loop for sd in (slots-for-possibly-normalized-class class)
-                     when (key-or-base-slot-p sd)
+                     when (and (key-or-base-slot-p sd)
+                               ;; we dont want to insert/update auto-increments
+                               ;; but we do read them
+                               (not (and to-database-p (auto-increment-column-p sd))))
                      collect sd))
              (get-classes-and-slots (class &aux (normalizedp (normalizedp class)))
                (let ((slots (storable-slots class)))

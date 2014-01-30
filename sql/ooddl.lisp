@@ -101,7 +101,9 @@ in DATABASE which defaults to *DEFAULT-DATABASE*."
 
 (defmethod auto-increment-column-p (slotdef &optional (database clsql-sys:*default-database*))
   (declare (ignore database))
-  (or (member :auto-increment (listify (view-class-slot-db-constraints slotdef)))
+  (or (intersection
+       +auto-increment-names+
+       (listify (view-class-slot-db-constraints slotdef)))
       (slot-value slotdef 'autoincrement-sequence)))
 
 (defmethod %install-class ((self standard-db-class) database
