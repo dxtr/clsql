@@ -20,10 +20,7 @@ increasing the number of failing tests
    :TIME/PG/FDML/USEC, :FDML/SELECT/36, :FDDL/CACHE-TABLE-QUERIES/1.
 
 :sqlite3
-9 out of 300 total tests failed: :FDDL/CACHE-TABLE-QUERIES/1, :FDDL/INDEX/3, 
-   :FDDL/ATTRIBUTES/8, :FDDL/ATTRIBUTES/7, :FDDL/ATTRIBUTES/6, 
-   :FDDL/ATTRIBUTES/5, :FDDL/ATTRIBUTES/4, :FDDL/ATTRIBUTES/3, 
-   :FDDL/ATTRIBUTES/2.
+1 out of 300 total tests failed: :FDDL/INDEX/3.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

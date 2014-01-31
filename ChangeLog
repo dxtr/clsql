@@ -1,4 +1,8 @@
 2014-01-30 Russ Tyndall <russ@acceleration.net>
+	* sqlite3-sql.lisp, fddl.lisp Dont compare database-identifiers
+	with invalid comparison operators
+
+2014-01-30 Russ Tyndall <russ@acceleration.net>
 	* generic-odbc.lisp, ooddl.lisp, generic-postgresql.lisp,
 	test-init.lisp, ds-nodes.lisp, generic-odbc.lisp, odbc-sql.lisp
 

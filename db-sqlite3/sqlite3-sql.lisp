@@ -284,9 +284,10 @@
                                     (database sqlite3-database)
                                     &key (owner nil))
   (declare (ignore owner))
-
+  
   (loop for field-info in (sqlite3-table-info table database)
-      when (string= attribute (second field-info))
+      when (string= (clsql-sys::unescaped-database-identifier attribute)
+                    (second field-info))
       return
         (let* ((raw-type (third field-info))
                (start-length (position #\( raw-type))

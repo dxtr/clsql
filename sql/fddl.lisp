@@ -345,7 +345,8 @@ the fourth is the scale of the attribute and the fifth is 1 if
 the attribute accepts null values and otherwise 0."
   (with-slots (attribute-cache) database
     (let ((table-ident (database-identifier table database)))
-      (multiple-value-bind (val found) (gethash table-ident attribute-cache)
+      (multiple-value-bind (val found)
+          (gethash table attribute-cache)
         (if (and found (second val))
             (second val)
             (let ((types (mapcar #'(lambda (attribute)
@@ -361,10 +362,10 @@ the attribute accepts null values and otherwise 0."
                                                   :owner owner))))
               (cond
                 ((and (not found) (eq t *cache-table-queries-default*))
-                 (setf (gethash table-ident attribute-cache)
+                 (setf (gethash table attribute-cache)
                        (list :unspecified types)))
                 ((and found (eq t (first val))
-                      (setf (gethash table-ident attribute-cache)
+                      (setf (gethash table attribute-cache)
                             (list t types)))))
               types))))))
 
