@@ -1,4 +1,13 @@
 2014-01-30 Russ Tyndall <russ@acceleration.net>
+	* sqlite3-sql.lisp specify :utf-8 as the default encoding if there
+	is not one (allows :clsql-cffi to be closer to working for this
+	backend).
+
+	I ran the test suite successfully once with :clsql-cffi, but there
+	after I got spurious errors and especially unrecoverable errors
+	while connecting about the database being locked
+
+2014-01-30 Russ Tyndall <russ@acceleration.net>
 	* sqlite3-sql.lisp, fddl.lisp Dont compare database-identifiers
 	with invalid comparison operators
 
