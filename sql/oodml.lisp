@@ -586,6 +586,7 @@
            ((list vector array)
             (let* ((*print-circle* t)
                    (*print-array* t)
+                   (*print-length* nil)
                    (value (prin1-to-string val)))
               value))
            (otherwise (call-next-method)))))))

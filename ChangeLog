@@ -1,3 +1,7 @@
+2014-02-24 Russ Tyndall <russ@acceleration.net>
+	* oodml.lisp bind *print-length* to nil before printing
+	lists/arrays to the database.
+
 2014-01-30 Russ Tyndall <russ@acceleration.net>
 	* sqlite3-sql.lisp specify :utf-8 as the default encoding if there
 	is not one (allows :clsql-cffi to be closer to working for this
