@@ -149,6 +149,9 @@
          * updated the docs to use text instead of longchar since text is
          a more standard db-type (pg,my,and ms all use text)
 
+2013-11-23 Kiss Kalman <kami@zalaszam.hu>
+	* utils/sql.lisp: Commit patch adding ccl getenv support
+
 2013-04-17 Kevin Rosenberg <kevin@rosenberg.net>
 	* Version 6.4.1
 	* sql/utils.lisp: Patch from Ben Hyde to add weak hash table

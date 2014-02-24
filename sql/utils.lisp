@@ -375,7 +375,7 @@ list of characters and replacement strings."
   (cdr (assoc (string var) ext:*environment-list* :test #'equalp
               :key #'string))
   #+lispworks (lw:environment-variable (string var))
-  #+mcl (ccl::getenv var)
+  #+ccl (ccl::getenv var)
   #+sbcl (sb-ext:posix-getenv var))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
