@@ -69,7 +69,6 @@ lispdir-tests	:= $(clc-tests)/tests
 build-arch: build-arch-stamp
 build-arch-stamp:
 	dh_testdir
-	# env LDFLAGS=`pkg-buildflags --get LDFLAGS` $(MAKE)
 	$(MAKE)
 	touch build-arch-stamp
 

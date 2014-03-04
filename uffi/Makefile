@@ -23,6 +23,12 @@ shared_lib=$(base).so
 shared64_lib=$(base)64.so
 dylib=$(base).dylib
 
+ifneq ($(OS_DPKG_BUILDFLAGS),0)
+  CFLAGS:=$(CFLAGS) $(shell dpkg-buildflags --get CFLAGS)
+  LDFLAGS:=$(LDFLAGS) $(shell dpkg-buildflags --get LDFLAGS | sed "/-Wl,\(.*\)/ s//\1/")
+endif
+
+
 .PHONY: all
 all: $(shared_lib)
 
@@ -48,12 +54,12 @@ else
 	  ld -shared -soname=$(base) $(LDFLAGS) $(object) -o $(shared_lib)
         else
           ifneq ($(OS_LINUX64),0)
-	    gcc -fPIC -DPIC -c $(source) -o $(object)
-	    ld -shared -soname=$(base) -lc $(object) -o $(shared64_lib)
+	    gcc $(CFLAGS) -fPIC -DPIC -c $(source) -o $(object)
+	    ld $(LDFLAGS) -shared -soname=$(base) -lc $(object) -o $(shared64_lib)
 	    rm -f $(object)
 	    @echo "Ensure that you have multiarch i386 build tools if you want to build 32-bit library"
-	    -gcc -m32 -fPIC -DPIC -c $(source) -o $(object)
-	    -ld -melf_i386 -shared -soname=$(base) -lc $(object) -o $(shared_lib)
+	    -gcc -m32 $(CFLAGS) -fPIC -DPIC -c $(source) -o $(object)
+	    -ld -melf_i386 $(LDFLAGS) -shared -soname=$(base) -lc $(object) -o $(shared_lib)
           else
 	    gcc -fPIC -DPIC -c $(source) -o $(object)
 	    ld -shared -soname=$(base) -lc $(object) -o $(shared_lib)
