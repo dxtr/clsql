@@ -142,3 +142,28 @@ connection is no longer usable."))
 
 (defun signal-database-too-strange (message)
   (error 'database-too-strange :message message))
+
+
+(define-condition sql-value-conversion-error (error)
+  ((expected-type :accessor expected-type :initarg :expected-type :initform nil)
+   (value :accessor value :initarg :value :initform nil)
+   (database :accessor database :initarg :database :initform nil)))
+
+(defun error-converting-value (val type &optional (database *default-database*))
+  (restart-case 
+      (error 'sql-value-conversion-error
+             :expected-type type :value val :database database)
+    (use-value (new-val)
+      :report
+      (lambda (stream)
+        (write-sequence
+         "Use a different value instead of this failed conversion" stream))
+      (values new-val t)
+      )))
+
+(defun maybe-error-converting-value
+    (new val type &optional (database *default-database*))
+  (if (typep new type)
+      new
+      (error-converting-value
+       val type database)))

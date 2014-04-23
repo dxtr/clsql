@@ -555,6 +555,10 @@
              db-type type args database)
      (format nil "VARCHAR(~D)" *default-string-length*))))
 
+(defun print-readable-symbol (in &aux (*package* (find-package :keyword))
+                                 (*print-readably* t))
+  (prin1-to-string in))
+
 (defmethod database-output-sql-as-type (type val database db-type)
   (declare (ignore type database db-type))
   val)
@@ -573,11 +577,8 @@
      (if (null val)
          (call-next-method)
          (case type
-           (symbol
-            (format nil "~A::~A"
-                    (package-name (symbol-package val))
-                    (symbol-name val)))
-           (keyword (symbol-name val))
+           ((or symbol keyword)
+            (print-readable-symbol val))
            (string val)
            (char (etypecase val
                    (character (write-to-string val))
@@ -591,70 +592,76 @@
               value))
            (otherwise (call-next-method)))))))
 
-(defmethod read-sql-value (val type database db-type
-                           &aux *read-eval*)
-  (declare (ignore database db-type))
-  ;; TODO: All the read-from-strings in here do not check that
-  ;; what we read was of the correct type, should this change?
 
-  ;; TODO: Should this case `(typep val type)=>t` be an around
-  ;; method that short ciruits?
+(defmethod read-sql-value :around
+    (val type database db-type
+     &aux *read-eval*)
+  (declare (ignore db-type))
   (cond
-    ((null type) val) ;;we have no desired type, just give the value
-    ((typep val type) val) ;;check that it hasn't already been converted.
-    ((typep val 'string) (read-from-string val)) ;;maybe read will just take care of it?
-    (T (error "Unable to read-sql-value ~a as type ~a" val type))))
+    ;; null value or type
+    ((or (equalp "nil" val) (eql 'null val)) nil) 
+    
+    ;; no specified type or already the right type
+    ((or (null type)
+         (ignore-errors (typep val type)))
+     val)
 
-(defmethod read-sql-value (val (type symbol) database db-type
+    ;; actually convert
+    (t 
+     (let ((res (handler-bind
+                    ;; all errors should be converted to sql-value-conversion-error
+                    ((error (lambda (c)
+                              (when *debugger-hook*
+                                (invoke-debugger c))
+                              (unless (typep c 'sql-value-conversion-error)
+                                (error-converting-value val type database)))))
+                  (call-next-method))))
+       ;; if we didnt get the right type after converting, we should probably
+       ;; error right away
+       (maybe-error-converting-value
+        res val type database)))))
+
+(defmethod read-sql-value (val type database db-type
                            ;; never eval while reading values
                            &aux *read-eval*)
-  ;; TODO: All the read-from-strings in here do not check that
-  ;; what we read was of the correct type, should this change?
-  (unless (or (equalp "nil" val) (eql 'null val))
-    (case type
-      ((string varchar) val)
-      (char (etypecase val
-              (string (schar val 0))
-              (character val)))
-      (keyword
-       (when (< 0 (length val))
-         (intern (symbol-name-default-case val) :keyword)))
-      (symbol
-       (when (< 0 (length val))
-         (intern (symbol-name-default-case val))))
-      ((smallint mediumint bigint integer universal-time)
-       (etypecase val
-         (string (parse-integer val))
-         (number val)))
-      ((double-float float)
-       ;; ensure that whatever we got is coerced to a float of the correct
-       ;; type (eg: 1=>1.0d0)
-       (float
-        (etypecase val
-          (string (let ((*read-default-float-format*
-                          (ecase type
-                            (float 'single-float)
-                            (double-float 'double-float))))
-                    (read-from-string val)))
-          (float val))
-        (if (eql type 'double-float) 1.0d0 1.0s0)))
-      (number
-       (etypecase val
+  ;; errors, nulls and preconverted types are already handled in around
+  (typecase type
+    (symbol
+     (case type
+       ((string varchar) val)
+       (char (string (schar val 0)))
+       ((or keyword symbol)
+        (read-from-string val))
+       ((smallint mediumint bigint integer universal-time)
+        (parse-integer val))
+       ((double-float float)
+        ;; ensure that whatever we got is coerced to a float of the correct
+        ;; type (eg: 1=>1.0d0)
+        (float
+         (etypecase val
+           (string (let ((*read-default-float-format*
+                           (ecase type
+                             (float 'single-float)
+                             (double-float 'double-float))))
+                     (read-from-string val)))
+           ;; maybe wrong type of float
+           (float val)) 
+         (if (eql type 'double-float) 1.0d0 1.0s0)))
+       (number (read-from-string val))
+       ((boolean generalized-boolean)
+        (if (member val '(nil t))
+            val
+            (etypecase val
+              (string
+               (when (member val '("1" "t" "true" "y") :test #'string-equal)
+                 t))
+              (number (not (zerop val))))))
+       ((wall-time duration) (parse-timestring val))
+       (date (parse-datestring val))
+       (t (call-next-method))))
+    (t (typecase val
          (string (read-from-string val))
-         (number val)))
-      ((boolean generalized-boolean)
-       (if (member val '(nil t))
-           val
-           (etypecase val
-             (string
-              (when (member val '("1" "t" "true" "y") :test #'string-equal)
-                t))
-             (number (not (zerop val))))))
-      ((wall-time duration)
-       (parse-timestring val))
-      (date
-       (parse-datestring val))
-      (t (call-next-method)))))
+         (t (error-converting-value val type database))))))
 
 ;; ------------------------------------------------------------
 ;; Logic for 'faulting in' :join slots
