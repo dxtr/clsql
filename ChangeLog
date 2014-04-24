@@ -1,3 +1,9 @@
+2014-04-24 Russ Tyndall <russ@acceleration.net>
+	* oodml.lisp, test-oodml.lisp Better handling of view-slots of
+	type symbol/keyword.  Better handling of printing and reading
+	bindings (per mailing list request, always read and write in base
+	10)
+
 2014-02-24 Russ Tyndall <russ@acceleration.net>
 	* oodml.lisp bind *print-length* to nil before printing
 	lists/arrays to the database.

@@ -524,7 +524,7 @@
     (char (if args
               (format nil "CHAR(~D)" (first args))
               "CHAR(1)"))
-    ((varchar string)
+    ((varchar string symbol keyword)
      (if args
          (format nil "VARCHAR(~A)" (car args))
          (format nil "VARCHAR(~D)" *default-string-length*)))
@@ -559,43 +559,44 @@
                                  (*print-readably* t))
   (prin1-to-string in))
 
-(defmethod database-output-sql-as-type (type val database db-type)
-  (declare (ignore type database db-type))
-  val)
-
-(defmethod database-output-sql-as-type ((type symbol) val database db-type)
+(defmethod database-output-sql-as-type
+    (type val database db-type
+     &aux
+     (*print-circle* t) (*print-array* t)
+     (*print-length* nil) (*print-base* #10r10))
   (declare (ignore database))
-  (case type ;; booleans handle null differently
-    ((boolean generalized-boolean)
+  (cond 
+    ((null type) val)
+    ((member type '(boolean generalized-boolean))
+     ;; booleans handle null differently
      (case db-type
        ;; done here so it can be done once
        ((:mssql :mysql) (if val 1 0))
        (otherwise (if val "t" "f"))))
-    (otherwise
-     ;; in all other cases if we have nil give everyone else a shot at it,
-     ;; which by default returns nil
-     (if (null val)
-         (call-next-method)
-         (case type
-           ((or symbol keyword)
-            (print-readable-symbol val))
-           (string val)
-           (char (etypecase val
-                   (character (write-to-string val))
-                   (string val)))
-           (float (format nil "~F" val))
-           ((list vector array)
-            (let* ((*print-circle* t)
-                   (*print-array* t)
-                   (*print-length* nil)
-                   (value (prin1-to-string val)))
-              value))
-           (otherwise (call-next-method)))))))
+    ((null val)
+     (when (next-method-p)
+       (call-next-method)))
+    (t
+     (case type
+       ((or symbol keyword)
+        (print-readable-symbol val))
+       (string val)
+       (char (etypecase val
+               (character (write-to-string val))
+               (string val)))
+       (float (format nil "~F" val))
+       ((list vector array)
+        (prin1-to-string val))
+       (otherwise
+        (if (next-method-p)
+            (call-next-method)
+            val))))))
 
 
 (defmethod read-sql-value :around
     (val type database db-type
-     &aux *read-eval*)
+     ;; never eval while reading values, always read base 10
+     &aux *read-eval* (*read-base* #10r10))
   (declare (ignore db-type))
   (cond
     ;; null value or type
@@ -621,9 +622,7 @@
        (maybe-error-converting-value
         res val type database)))))
 
-(defmethod read-sql-value (val type database db-type
-                           ;; never eval while reading values
-                           &aux *read-eval*)
+(defmethod read-sql-value (val type database db-type)
   ;; errors, nulls and preconverted types are already handled in around
   (typecase type
     (symbol

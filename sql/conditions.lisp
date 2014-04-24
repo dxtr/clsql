@@ -153,11 +153,11 @@ connection is no longer usable."))
   (restart-case 
       (error 'sql-value-conversion-error
              :expected-type type :value val :database database)
+    (continue ()
+      :report "Continue using the unconverted value"
+      (values val t))
     (use-value (new-val)
-      :report
-      (lambda (stream)
-        (write-sequence
-         "Use a different value instead of this failed conversion" stream))
+      :report "Use a different value instead of this failed conversion"
       (values new-val t)
       )))
 

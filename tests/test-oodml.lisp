@@ -25,19 +25,19 @@
  (clsql-sys::read-sql-value
   (clsql-sys::database-output-sql-as-type 'symbol 'clsql-tests::foo nil nil)
   'symbol nil nil)
- '(clsql-tests::foo))
+ clsql-tests::foo)
 
 (deftest :oodml/read-symbol-value/2-into-another-pacakge
  (clsql-sys::read-sql-value
   (clsql-sys::database-output-sql-as-type 'symbol 'clsql-sys::foo nil nil)
   'symbol nil nil)
- '(clsql-sys::foo))
+ clsql-sys::foo)
 
 (deftest :oodml/read-symbol-value/3-keyword
  (clsql-sys::read-sql-value
   (clsql-sys::database-output-sql-as-type 'keyword ':foo nil nil)
   'keyword nil nil)
- '(:foo))
+ :foo)
 
 (deftest :oodml/read-symbol-value/4-keyword-error
  (handler-case
@@ -46,7 +46,7 @@
       'keyword nil nil)
    (clsql-sys::sql-value-conversion-error (c) (declare (ignore c))
      :error))
- '(:error))
+ :error)
 
 (deftest :oodml/select/1
     (with-dataset *ds-employees*
@@ -301,6 +301,14 @@
       (mapcar #'(lambda (ea) (slot-value (slot-value ea 'address) 'street-number))
 	      (select 'deferred-employee-address :flatp t :order-by [aaddressid] :caching nil)))
   (10 10 nil nil nil nil))
+
+(deftest :oodm/retrieval/10-slot-columns
+ (with-dataset *ds-employees*
+   (mapcar #'title
+           (select 'employee :flatp t :caching nil
+                   :where [<= [emplid] 3]
+                   :order-by `((,[emplid]  :asc)))))
+ (supplicant :adherent cl-user::novice))
 
 ;; tests update-records-from-instance
 (deftest :oodml/update-records/1
