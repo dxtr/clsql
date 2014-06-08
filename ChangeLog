@@ -4,6 +4,11 @@
 	bindings (per mailing list request, always read and write in base
 	10)
 
+2014-03-04  Kevin Rosenberg <kevin@rosenberg.net>
+	* Version 6.5.0: New release
+	* makefile.common: Check for /usr/bin/dpkg-buildflags
+	* {db-mysql,uffi}/Makefile: Use debian buildflags
+
 2014-02-24 Russ Tyndall <russ@acceleration.net>
 	* oodml.lisp bind *print-length* to nil before printing
 	lists/arrays to the database.

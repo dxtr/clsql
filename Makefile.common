@@ -13,6 +13,11 @@ endif
 OS_CYGWIN=$(shell expr "$(UNAME)" : '.*CYGWIN.*')
 OS_LINUX=$(shell expr "$(UNAME)" : '.*Linux.*')
 OS_LINUX64=$(shell expr "$(UNAME_A)" : '.*Linux.*x86_64.*')
+ifneq ("$(wildcard /usr/bin/dpkg-buildflags)","")
+DPKG_BUILDFLAGS=1
+else
+DPKG_BUILDFLAGS=0
+endif
 
 all:
 	
