@@ -546,9 +546,10 @@
 (deftest :fdml/insert/1
     (with-dataset *ds-employees*
       (let ((now (get-universal-time)))
-	(clsql:insert-records :into [employee]
-			      :values `(11 1 "Yuri" "Gagarin" "gagarin@soviet.org"
-					   1 1 1.85 t ,(clsql:utime->time now) ,now))
+	(clsql:insert-records
+         :into [employee]
+         :values `(11 1 "clsql-sys::astronaut" "Yuri" "Gagarin" "gagarin@soviet.org"
+                   1 1 1.85 t ,(clsql:utime->time now) ,now))
 	(values
 	  (clsql:select [first-name] [last-name] [email]
 			:from [employee] :where [= [emplid] 11])
