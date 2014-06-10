@@ -1,3 +1,10 @@
+2014-06-10 Russ Tyndall <russ@acceleration.net>
+
+	* db-mysql/Makefile - the results of dpkg-buildflags --get LDFLAGS
+	seem to have changed on my system and and sed was returning
+	invalid command line arguments to ld.  To resolve this I changed
+	sed to emit valid args, which seems to have resolved the issue.
+
 2014-04-24 Russ Tyndall <russ@acceleration.net>
 	* oodml.lisp, test-oodml.lisp Better handling of view-slots of
 	type symbol/keyword.  Better handling of printing and reading
