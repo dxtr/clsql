@@ -23,6 +23,9 @@
 (eval-when (:compile-toplevel :load-toplevel :execute)
   #+:clsql-cffi
   (unless (find-package 'cffi-uffi-compat)
+    #+quicklisp
+    (ql:quickload :cffi-uffi-compat)
+    #-quicklisp
     (asdf:operate 'asdf:load-op 'cffi-uffi-compat))
   #-:clsql-cffi
   (unless (find-package 'uffi)
