@@ -38,7 +38,7 @@ ifneq ($(OS_CYGWIN),0)
 endif
 ifneq ($(OS_DPKG_BUILDFLAGS),0)
   CFLAGS:=$(CFLAGS) $(shell dpkg-buildflags --get CFLAGS)
-  LDFLAGS:=$(LDFLAGS) $(shell dpkg-buildflags --get LDFLAGS | sed "/-Wl,\(.*\)/ s//\1/")
+  LDFLAGS:=$(LDFLAGS) $(shell dpkg-buildflags --get LDFLAGS | sed "s/-Wl\|,/ /ig")
 endif
 
 $(shared_lib): $(source) Makefile
