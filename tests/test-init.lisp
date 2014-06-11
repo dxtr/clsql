@@ -124,8 +124,10 @@
           (dolist (spec (db-type-spec db-type specs))
             (let ((*test-connection-spec* spec)
                   (*test-connection-db-type* db-type))
-              (do-tests-for-backend db-type spec :suites suites)))))))
-  (zerop *error-count*))
+              (format report-stream "~%~%Start Running Tests Against: ~A ~A~%~%" db-type (ignore-errors (subseq spec 0 2)))
+              (do-tests-for-backend db-type spec :suites suites)
+              (format report-stream  "~%~%Finished Running Tests Against: ~A ~A~%~%" db-type (ignore-errors (subseq spec 0 2))))))))
+    (zerop *error-count*)))
 
 (defun load-necessary-systems (specs)
   (dolist (db-type +all-db-types+)
