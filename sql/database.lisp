@@ -12,6 +12,9 @@
 
 (in-package #:clsql-sys)
 
+(defvar *default-encoding*
+  (or #+sbcl sb-impl::*default-external-format*
+      :utf-8))
 
 (defvar *connect-if-exists* :error
   "Default value for the if-exists keyword argument in calls to
@@ -73,7 +76,7 @@ error is signalled."
                 (make-default t)
                 (pool nil)
                 (database-type *default-database-type*)
-                (encoding nil))
+                (encoding *default-encoding*))
   "Connects to a database of the supplied DATABASE-TYPE which
 defaults to *DEFAULT-DATABASE-TYPE*, using the type-specific
 connection specification CONNECTION-SPEC. The value of IF-EXISTS,
@@ -315,8 +318,9 @@ system specified by DATABASE-TYPE."
   (database-list connection-spec database-type))
 
 (defun encoding (db)
-  (when (typep db 'database)
-    (slot-value db 'encoding)))
+  (or (when (typep db 'database)
+        (slot-value db 'encoding))
+      *default-encoding*))
 
 (defun (setf encoding) (encoding db)
   (when (typep db 'database)

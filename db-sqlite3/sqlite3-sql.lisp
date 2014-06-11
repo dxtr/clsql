@@ -205,13 +205,11 @@
                                              (sqlite3:sqlite3-column-blob stmt i)
                                              (car types)
                                              :length (sqlite3:sqlite3-column-bytes stmt i)
-                                             :encoding (or (encoding database)
-                                                           :utf-8))
+                                             :encoding (encoding database))
                                             (clsql-uffi:convert-raw-field
                                              (sqlite3:sqlite3-column-text stmt i)
                                              (car types)
-                                             :encoding (or (encoding database)
-                                                           :utf-8))))))
+                                             :encoding (encoding database))))))
                    (when field-names
                      (setf col-names (loop for n from 0 below n-col
                                            collect (sqlite3:sqlite3-column-name stmt n))))

@@ -35,7 +35,7 @@
 
 
 
-(defun acquire-from-pool (connection-spec database-type &optional pool encoding)
+(defun acquire-from-pool (connection-spec database-type &optional pool (encoding *default-encoding*))
   "Try to find a working database connection in the pool or create a new
 one if needed. This performs 1 query against the DB to ensure it's still
 valid. When possible (postgres, mssql) that query will be a reset

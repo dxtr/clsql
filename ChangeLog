@@ -1,3 +1,12 @@
+2014-06-11 Russ Tyndall <russ@acceleration.net>
+	* databases.lisp, sqlite3-sql.lisp
+	Similar to and overriding the patch 2014-01-30 937a3d, adds a
+	default-encoding variable uses that in places where a nil encoding
+	was being passed. Defaults to :utf-8.  This is mostly in place so
+	that uffi and cffi both work similarly (by moving the default into
+	clsql instead of clsql-uffi).  This allows my automated build
+	environment to do its job
+
 2014-06-10 Russ Tyndall <russ@acceleration.net>
 
 	* db-mysql/Makefile - the results of dpkg-buildflags --get LDFLAGS
