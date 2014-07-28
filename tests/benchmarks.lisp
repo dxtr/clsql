@@ -42,7 +42,7 @@
   (values))
 
 (defun do-benchmarks-for-backend (db-type spec count)
-  (test-connect-to-database db-type spec)
+  (test-setup-database db-type spec)
   (write-report-banner "Benchmarks" db-type *report-stream*
 		       (database-name-from-spec spec db-type))
 

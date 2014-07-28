@@ -26,8 +26,8 @@
    #:run-benchmarks
    #:run-benchmarks-append-report-file
    #:summarize-test-report
-   #:test-initialise-database
-   #:test-connect-to-database
+   #:test-connect
+   #:test-setup-database
    )
   (:documentation "Regression tests for CLSQL."))
 
