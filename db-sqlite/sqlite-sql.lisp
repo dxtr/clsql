@@ -99,7 +99,7 @@
                    (setf col-names (loop for i from 0 below n-col
                                          collect (sqlite:sqlite-aref sqlite-col-names i (encoding database)))))
                  (let ((canonicalized-result-types
-                        (canonicalize-result-types result-types n-col sqlite-col-names)))
+                        (canonicalize-result-types result-types n-col sqlite-col-names database)))
                    (flet ((extract-row-data (row)
                             (declare (type sqlite:sqlite-row-pointer-type row))
                             (loop for i from 0 below n-col
@@ -147,7 +147,8 @@
                                (canonicalize-result-types
                                 result-types
                                 n-col
-                                col-names))))
+                                col-names
+                                database))))
               (if full-set
                   (values result-set n-col nil)
                   (values result-set n-col)))))
@@ -164,11 +165,12 @@
                  :error-id (sqlite:sqlite-error-code err)
                  :message (sqlite:sqlite-error-message err))11)))))
 
-(defun canonicalize-result-types (result-types n-col col-names)
+(defun canonicalize-result-types (result-types n-col col-names database)
   (when result-types
     (let ((raw-types (if (eq :auto result-types)
                          (loop for j from n-col below (* 2 n-col)
-                               collect (ensure-keyword (sqlite:sqlite-aref col-names j)))
+                               collect (ensure-keyword
+                                        (sqlite:sqlite-aref col-names j (encoding database))))
                        result-types)))
       (loop for type in raw-types
             collect

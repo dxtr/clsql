@@ -1,3 +1,9 @@
+2014-12-03 Russ Tyndall <russ@acceleration.net>
+	* sqlite-sql.lisp
+	Added database arg to `canonicalize-result-types` so that it could
+	correctly call `sqlite-aref` with the required number of arguments
+	Thanks Zach Beane for the bug report.
+
 2014-07-29 Russ Tyndall <russ@acceleration.net>
 	* mysql-api.lisp, mysql-sql.lisp, test-connection.lisp
 	Added code to the mysql backend to pull all result sets as
