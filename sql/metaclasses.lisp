@@ -149,7 +149,8 @@
                    (remove-keyword-arg all-keys :direct-superclasses)))
         (call-next-method)))
   (register-metaclass class (nth (1+ (position :direct-slots all-keys))
-                                 all-keys)))
+                                 all-keys))
+  class)
 
 
 (defun get-keywords (keys list)

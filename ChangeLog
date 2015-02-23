@@ -1,3 +1,9 @@
+2014-02-23 Russ Tyndall <russ@acceleration.net>
+	* sql/metaclasses.lisp
+	made reinitialize-instance return the instance passed to it as
+	SBCL now expected (mentioned on the SBCL-devel mailing list by
+	Stas
+
 2014-12-03 Russ Tyndall <russ@acceleration.net>
 	* sqlite-sql.lisp
 	Added database arg to `canonicalize-result-types` so that it could
