@@ -245,9 +245,11 @@
 			   result-types field-names)
   (declare (optimize (speed 3)))
   (let ((mysql-ptr (database-mysql-ptr database))
-        (results nil)     ;; all the results and column-names in reverse-order
-        res-ptr (num-fields 0))
-    (declare (type mysql-mysql-ptr-def mysql-ptr res-ptr)
+        (results nil) ;; all the results and column-names in reverse-order
+        (res-ptr nil)
+        (num-fields 0))
+    (declare (type mysql-mysql-ptr-def mysql-ptr)
+             (type (or null mysql-mysql-res-ptr-def) res-ptr)
              (fixnum num-fields))
     (when (database-execute-command query-expression database)
       (labels

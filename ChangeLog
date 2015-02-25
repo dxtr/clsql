@@ -1,3 +1,10 @@
+2014-02-24 Russ Tyndall <russ@acceleration.net>
+	* mysql-sql.lisp
+	an error in type declarations generating a compilation warning
+	was being treated as an error in recent SBCLs, fixed the type
+	warning by correcting the type (still a ton of compliation 
+	notes)
+
 2014-02-23 Russ Tyndall <russ@acceleration.net>
 	* sql/metaclasses.lisp
 	made reinitialize-instance return the instance passed to it as
