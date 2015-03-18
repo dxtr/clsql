@@ -1,3 +1,7 @@
+2014-03-18 Russ Tyndall <russ@acceleration.net>
+	* {uffi,db-mysql}/Makefile: remove -pie build hardening for
+	which caused load issues for Linux Mint
+
 2014-02-26 Kevin Rosenberg <kevin@rosenberg.net>
 	* Version 6.6.0 release
 	* {uffi,db-mysql}/Makefile: Add build hardening for Debian
