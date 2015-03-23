@@ -151,8 +151,9 @@ connection is no longer usable."))
 
 (defun error-converting-value (val type &optional (database *default-database*))
   (restart-case 
-      (error 'sql-value-conversion-error
-             :expected-type type :value val :database database)
+      (error (make-condition
+              'sql-value-conversion-error
+              :expected-type type :value val :database database))
     (continue ()
       :report "Continue using the unconverted value"
       (values val t))

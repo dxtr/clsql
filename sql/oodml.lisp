@@ -657,9 +657,13 @@
               (number (not (zerop val))))))
        ((wall-time duration) (parse-timestring val))
        (date (parse-datestring val))
-       (t (call-next-method))))
+       (list (let ((*read-eval* nil))
+               (read-from-string val)))
+       (t (error-converting-value val type database))))
     (t (typecase val
-         (string (read-from-string val))
+         (string
+          (let ((*read-eval* nil))
+            (read-from-string val)))
          (t (error-converting-value val type database))))))
 
 ;; ------------------------------------------------------------

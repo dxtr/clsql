@@ -216,7 +216,9 @@
 
          (%do-tests test-forms db-type)
 
-           (format *report-stream* "~&Tests skipped:")
+         (format *report-stream* "~&~D of ~D Tests skipped:"
+                 (length skip-tests)
+                 (length test-forms))
            (if skip-tests
                (let ((max-test-name (length (symbol-name (caar skip-tests)))))
                  (dolist (skipped (cdr skip-tests))

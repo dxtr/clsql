@@ -1,4 +1,4 @@
-Note from Russ Tyndall <russ@acceleration.net> 2013-01-30 :
+Note from Russ Tyndall <russ@acceleration.net> 2015-03-23 :
 
 This is the current results of running the test suite against all the database
 backends I have accessible, on SBCL / UBUNTU64bit.  It would be great to
@@ -7,20 +7,24 @@ tests so that all pass.  In the interim, I would like know that I am not
 increasing the number of failing tests
 
 :mysql
-1 out of 301 total tests failed: :FDDL/CACHE-TABLE-QUERIES/1.
+No tests failed.
+18 of 310 Tests skipped
 
 :odbc MSSQL2000/5
-1 out of 298 total tests failed: :FDDL/CACHE-TABLE-QUERIES/1.
+No tests failed.
+22 of 306 Tests skipped:
 
 :odbc postgres
-2 out of 311 total tests failed: :FDML/SELECT/36, :FDDL/CACHE-TABLE-QUERIES/1.
+*couldnt get them to run - foreign lib problems*
 
 :postgres-socket :postgres-socket-3
-5 out of 300 total tests failed: :TIME/PG/OODML/USEC, :TIME/PG/OODML/NO-USEC, 
-   :TIME/PG/FDML/USEC, :FDML/SELECT/36, :FDDL/CACHE-TABLE-QUERIES/1.
+4 out of 308 total tests failed: :TIME/PG/OODML/USEC, :TIME/PG/OODML/NO-USEC, 
+   :TIME/PG/FDML/USEC, :FDML/SELECT/36.
+20 of 308 Tests skipped:
 
 :sqlite3
-1 out of 300 total tests failed: :FDDL/INDEX/3.
+1 out of 308 total tests failed: :FDDL/INDEX/3.
+20 of 308 Tests skipped:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

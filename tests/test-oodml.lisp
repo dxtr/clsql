@@ -17,6 +17,13 @@
 
 (clsql-sys:file-enable-sql-reader-syntax)
 
+(defmacro has-sql-value-conversion-error (() &body body)
+  `(let (*debugger-hook*)
+    (handler-case
+        (progn ,@body nil)
+      (clsql-sys::sql-value-conversion-error (c)
+        (declare (ignore c))
+        t))))
 
 (setq *rt-oodml*
       '(
@@ -40,13 +47,32 @@
  :foo)
 
 (deftest :oodml/read-symbol-value/4-keyword-error
- (handler-case
-     (clsql-sys::read-sql-value
-      (clsql-sys::database-output-sql-as-type 'keyword 'foo nil nil)
-      'keyword nil nil)
-   (clsql-sys::sql-value-conversion-error (c) (declare (ignore c))
-     :error))
- :error)
+ (has-sql-value-conversion-error ()
+   (clsql-sys::read-sql-value
+    (clsql-sys::database-output-sql-as-type 'keyword 'foo nil nil)
+    'keyword nil nil))
+ T)
+
+(deftest :oodml/read-symbol-value/5-unknown-type-error-1
+ (has-sql-value-conversion-error ()
+   (clsql-sys::read-sql-value
+    (clsql-sys::database-output-sql-as-type 'bloop 'foo nil nil)
+    'bloop nil nil))
+ t)
+
+(deftest :oodml/read-symbol-value/6-unknown-type-error-2
+ (has-sql-value-conversion-error ()
+   (clsql-sys::read-sql-value
+    (clsql-sys::database-output-sql-as-type 'bloop 'foo nil nil)
+    '(or integer float) nil nil))
+ t)
+
+(deftest :oodml/read-symbol-value/read-list
+ (clsql-sys::read-sql-value
+  (clsql-sys::database-output-sql-as-type
+   'list '(("status" "new" "open")) nil nil)
+  'list nil nil)
+ (("status" "new" "open")))
 
 (deftest :oodml/select/1
     (with-dataset *ds-employees*
