@@ -1,19 +1,26 @@
-2014-03-18 Russ Tyndall <russ@acceleration.net>
+2015-03-24 Russ Tyndall <russ@acceleration.net>
+	* sql/oodml.lisp: fixed call-next-method in the base of
+	read-sql-value and replaced with a continuable
+	sql-value-conversion-error
+	* default read-sql-value for list
+	* tests for sql-value-conversion-errors and list
+	
+2015-03-18 Russ Tyndall <russ@acceleration.net>
 	* {uffi,db-mysql}/Makefile: remove -pie build hardening for
 	which caused load issues for Linux Mint
 
-2014-02-26 Kevin Rosenberg <kevin@rosenberg.net>
+2015-02-26 Kevin Rosenberg <kevin@rosenberg.net>
 	* Version 6.6.0 release
 	* {uffi,db-mysql}/Makefile: Add build hardening for Debian
 
-2014-02-24 Russ Tyndall <russ@acceleration.net>
+2015-02-24 Russ Tyndall <russ@acceleration.net>
 	* mysql-sql.lisp
 	an error in type declarations generating a compilation warning
 	was being treated as an error in recent SBCLs, fixed the type
 	warning by correcting the type (still a ton of compliation
 	notes)
 
-2014-02-23 Russ Tyndall <russ@acceleration.net>
+2015-02-23 Russ Tyndall <russ@acceleration.net>
 	* sql/metaclasses.lisp
 	made reinitialize-instance return the instance passed to it as
 	SBCL now expected (mentioned on the SBCL-devel mailing list by

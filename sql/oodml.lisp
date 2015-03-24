@@ -600,29 +600,36 @@
   (declare (ignore db-type))
   (cond
     ;; null value or type
-    ((or (equalp "nil" val) (eql 'null val)) nil) 
-    
+    ((or (null val)
+         (equalp "nil" val)
+         (eql 'null val)
+         (eql 'null type))
+     nil)
+
     ;; no specified type or already the right type
     ((or (null type)
          (ignore-errors (typep val type)))
      val)
 
     ;; actually convert
-    (t 
+    (t
      (let ((res (handler-bind
                     ;; all errors should be converted to sql-value-conversion-error
                     ((error (lambda (c)
-                              (when *debugger-hook*
-                                (invoke-debugger c))
                               (unless (typep c 'sql-value-conversion-error)
+                                ;; this was blowing up the tests till I
+                                ;; unbound *debugger-hook* not sure the answer,
+                                ;; as this is also imensely useful in actually
+                                ;; finding bugs below this point
+                                (when *debugger-hook* (invoke-debugger c))
                                 (error-converting-value val type database)))))
                   (call-next-method))))
        ;; if we didnt get the right type after converting, we should probably
        ;; error right away
-       (maybe-error-converting-value
-        res val type database)))))
+       (maybe-error-converting-value res val type database)))))
 
 (defmethod read-sql-value (val type database db-type)
+  "read a sql value, from :around read-eval is disabled read numbers in base 10"
   ;; errors, nulls and preconverted types are already handled in around
   (typecase type
     (symbol
@@ -644,7 +651,7 @@
                              (double-float 'double-float))))
                      (read-from-string val)))
            ;; maybe wrong type of float
-           (float val)) 
+           (float val))
          (if (eql type 'double-float) 1.0d0 1.0s0)))
        (number (read-from-string val))
        ((boolean generalized-boolean)
@@ -657,13 +664,10 @@
               (number (not (zerop val))))))
        ((wall-time duration) (parse-timestring val))
        (date (parse-datestring val))
-       (list (let ((*read-eval* nil))
-               (read-from-string val)))
+       (list (read-from-string val))
        (t (error-converting-value val type database))))
     (t (typecase val
-         (string
-          (let ((*read-eval* nil))
-            (read-from-string val)))
+         (string (read-from-string val))
          (t (error-converting-value val type database))))))
 
 ;; ------------------------------------------------------------
