@@ -1,4 +1,15 @@
-2014-02-26 Kevin Rosenberg <kevin@rosenberg.net>
+2015-03-30 Kevin Rosenberg <kevin@rosenberg.net>
+	* Version 6.6.2 release
+	* db-oracle/oracle-sql.lisp: Remove extra hyphen, thanks to
+	Thomas Vossen
+
+2015-03-18 Kevin Rosenberg <kevin@rosenberg.net>
+	* Version 6.6.1 release
+	* {uffi,db-mysql}/Makefile: Remove pie from build
+	hardening options for Debian/Ubuntu systems. Thanks to
+	DJ <jakep@arqux.com> and Russ Tyndall <russ@acceleration.net>
+
+2015-02-26 Kevin Rosenberg <kevin@rosenberg.net>
 	* Version 6.6.0 release
 	* {uffi,db-mysql}/Makefile: Add build hardening for Debian
 
