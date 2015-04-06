@@ -450,8 +450,6 @@
           (remove-duplicates tabs :test #'database-identifier-equal))
         nil)))
 
-
-
 (defmethod output-sql ((expr sql-value-exp) database)
   (with-slots (modifier components)
     expr
@@ -1234,3 +1232,16 @@ uninclusive, and the args from that keyword to the end."
     returns nil if there are no children"
   (clsql-ors clauses))
 
+
+(defclass sql-escape-string-exp (%sql-expression)
+  ((string
+    :initarg :string
+    :initform nil))
+  (:documentation
+   "An escaped string string expression (postgresql E'stuff') ."))
+
+(defmethod output-sql ((exp sql-escape-string-exp) database)
+  (with-slots (string) exp
+    (when string
+      (write-char #\E *sql-stream*)
+      (output-sql string database))))

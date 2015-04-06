@@ -46,6 +46,9 @@
   (make-instance 'sql-function-exp
                  :name 'all :args rest))
 
+(defsql sql-e-string (:symbol "E") (&rest rest)
+  (make-instance 'sql-escape-string-exp :string (first rest)))
+
 (defsql sql-not (:symbol "not") (&rest rest)
   (make-instance 'sql-value-exp
                  :modifier 'not :components rest))

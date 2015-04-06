@@ -1,3 +1,8 @@
+2015-04-06 Russ Tyndall <russ@acceleration.net>
+	* sql/operations, sql/expressions: add postgresql E-string
+	operator / expression.  Needed for correct regex handling
+	EG: [E "some string"]=> E'some string'
+
 2015-03-24 Russ Tyndall <russ@acceleration.net>
 	* sql/oodml.lisp: fixed call-next-method in the base of
 	read-sql-value and replaced with a continuable
