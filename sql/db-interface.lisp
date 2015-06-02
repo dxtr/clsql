@@ -380,8 +380,8 @@ of TYPE_NAME (keyword) PRECISION SCALE NULLABLE.")
 
 (defgeneric db-type-has-auto-increment? (db-type)
   (:method (db-type)
-    (declare (ignore db-type)
-	     nil))
+    (declare (ignore db-type))
+	     nil)
   (:documentation "NIL [default] if database-type supports auto-incrementing columns."))
 
 ;;; Large objects support (Marc Battyani)
