@@ -101,7 +101,7 @@ oriented interface."
   (operate 'test-op 'clsql-tests :force t))
 
 (defmethod perform :after ((o load-op) (c (eql (find-system 'clsql))))
-  (let* ((init-var (uffi:getenv "CLSQLINIT"))
+  (let* ((init-var (uffi::getenv "CLSQLINIT"))
          (init-file (or (when init-var (probe-file init-var))
                         (probe-file
                          (concatenate 'string

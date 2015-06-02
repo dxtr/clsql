@@ -37,6 +37,7 @@
           #+clsql-cmucl-mop #:mop
           #+allegro #:mop
           #+clisp #:clos
+          #+ecl #:mop
           #+lispworks #:clos
           #+scl #:clos
           #+openmcl #:openmcl-mop)
