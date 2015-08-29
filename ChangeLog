@@ -1,3 +1,8 @@
+2015-08-12 Kevin Rosenberg <kevin@rosenberg.net>
+	* Version 6.6.3 release
+	* db-oracle/oracle-sql.lisp: Patch for PostgreSQL socket interface
+	for unicode characters. Thanks to Jason Melbye.
+
 2015-03-30 Kevin Rosenberg <kevin@rosenberg.net>
 	* Version 6.6.2 release
 	* db-oracle/oracle-sql.lisp: Remove extra hyphen, thanks to

@@ -86,7 +86,7 @@
       <title>&uffi;</title>
       <para>
 	&clsql; uses <ulink
-	url="http://uffi.b9.com/"><citetitle>&uffi;</citetitle></ulink>
+	url="http://uffi.kpe.io/"><citetitle>&uffi;</citetitle></ulink>
 	as a <emphasis>Foreign Function Interface</emphasis>
 	(<glossterm linkend="gloss-ffi">FFI</glossterm>) to support
 	multiple &cl; implementations.
@@ -96,7 +96,7 @@
     <sect2>
       <title>&md5;</title>
       <para>&clsql;'s postgresql-socket interface uses Pierre Mai's 
-	<ulink url="http://files.b9.com/md5/">md5</ulink>
+	<ulink url="http://files.kpe.io/md5/">md5</ulink>
 	module.
       </para>       
     </sect2>

@@ -234,6 +234,14 @@ socket interface"
   (int32 pid)
   (int32 key))
 
+(defun read-bytes (socket length)
+  "Read a byte array of the given length from a stream."
+  (declare (type stream socket)
+           (type fixnum length)
+           (optimize (speed 3) (safety 0)))
+  (let ((result (make-array length :element-type '(unsigned-byte 8))))
+    (read-sequence result socket)
+    result))
 
 (defun read-socket-sequence (stream length &optional (allow-wide t))
   (declare (stream stream)
@@ -487,10 +495,16 @@ troubles."
                                :database database :user user
                                :password (or password ""))))
 
-(defun encrypt-md5 (plaintext salt)
-  (string-downcase
-   (format nil "~{~2,'0X~}"
-           (coerce (md5sum-string (concatenate 'string plaintext salt)) 'list))))
+(defun byte-sequence-to-hex-string (sequence)
+  (string-downcase (format nil "~{~2,'0X~}" (coerce sequence 'list))))
+
+(defun encrypt-password-md5 (password user salt)
+  (let ((pass1 (byte-sequence-to-hex-string
+		(md5::md5sum-string (concatenate 'string password user)))))
+    (byte-sequence-to-hex-string
+     (md5:md5sum-sequence (concatenate '(vector (unsigned-byte 8))
+				   (map '(vector (unsigned-byte 8)) #'char-code pass1)
+				   salt)))))
 
 (defun reopen-postgresql-connection (connection)
   "Reopen the given PostgreSQL connection.  Closes any existing
@@ -532,10 +546,11 @@ connection, if it is still open."
                          (postgresql-connection-password connection) salt)))
                      (force-output socket))
                     (5
-                     (let ((salt (read-socket-sequence socket 4 nil)))
-                       (let* ((pwd2 (encrypt-md5 (postgresql-connection-password connection)
-                                                 (postgresql-connection-user connection)))
-                              (pwd (encrypt-md5 pwd2 salt)))
+                     (let ((salt (read-bytes socket 4)))
+                       (let ((pwd (encrypt-password-md5
+				   (postgresql-connection-password connection)
+				   (postgresql-connection-user connection)
+				   salt)))
                          (send-encrypted-password-message
                           socket
                           (concatenate 'string "md5" pwd))))

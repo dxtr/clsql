@@ -4,9 +4,9 @@ Priority: extra
 Maintainer: Kevin M. Rosenberg <kmr@debian.org>
 Build-Depends: dh-lisp, debhelper (>= 7.0.0), libmysqlclient-dev, libpq-dev
 Standards-Version: 3.9.6
-Homepage: http://clsql.b9.com/
-Vcs-Git: git://git.b9.com/clsql.git
-Vcs-Browser: http://git.b9.com/?p=clsql.git
+Homepage: http://clsql.kpe.io/
+Vcs-Git: git://git.kpe.io/clsql.git
+Vcs-Browser: http://git.kpe.io/?p=clsql.git
 
 Package: cl-sql
 Architecture: all
