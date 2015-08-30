@@ -30,7 +30,7 @@ CFLAGS:=-I /usr/local/include/mysql -I /usr/include/mysql -I /sw/include/mysql -
 LDFLAGS:=-L/usr/local/lib64/mysql -L/usr/local/lib/mysql -L/usr/lib64/mysql -L/usr/lib/mysql -L/sw/lib -L/opt/local/lib/mysql -L/opt/local/lib/mysql5/mysql -L/usr/local/mysql/lib -L/usr/lib/gcc/i686-pc-cygwin/3.4.4 -lmysqlclient -lz -lc
 
 CFLAGS32:=-I /usr/local/include/mysql -I /usr/include/mysql -I /sw/include/mysql -I /opt/local/include/mysql -I /opt/local/include/mysql5/mysql -I /usr/local/mysql/include -m32
-LDFLAGS32:=-L/lib32 -L/usr/lib32 -melf_i386 -lmysqlclient -lz -lc
+LDFLAGS32:=-L/lib32 -L/usr/lib32 -lmysqlclient -lz -lc
 
 ifneq ($(OS_CYGWIN),0)
   CFLAGS:=-I /cygdrive/c/Program\ Files/MySQL/MySQL\ Server\ 5.0/include
@@ -64,14 +64,14 @@ else
         else
           ifneq ($(OS_LINUX64),0)
 	    gcc $(CFLAGS) -fPIC -c $(source) -o $(object)
-	    ld $(LDFLAGS) -shared -soname=$(base) $(object) -o $(shared64_lib)
+	    gcc $(LDFLAGS) -fPIC -shared -Wl,-soname=$(base) -lc $(object) -o $(shared64_lib)
 	    rm $(object)
 	    @echo "Ensure that you have multiarch i386 build tools and libraries if you want to build 32-bit library"
 	    -gcc $(CFLAGS32) -fPIC -c $(source) -o $(object)
-	    -ld -shared -soname=$(base) $(object) $(LDFLAGS32) -o $(shared_lib)
+	    -gcc $(LDFLAGS) -fPIC -shared -Wl,-soname=$(base) -lc $(object) $(LDFLAGS32) -o $(shared_lib)
           else
 	    gcc $(CFLAGS) -fPIC -c $(source) -o $(object)
-	    ld -shared -soname=$(base) $(object) $(LDFLAGS) -o $(shared_lib)
+	    gcc -m32 $(LDFLAGS) -fPIC  -shared -Wl,-soname=$(base) -lc $(object) $(LDFLAGS) -o $(shared_lib)
           endif
         endif
       endif
