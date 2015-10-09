@@ -653,7 +653,7 @@
            ;; maybe wrong type of float
            (float val))
          (if (eql type 'double-float) 1.0d0 1.0s0)))
-       (number (read-from-string val))
+       (number (read-decimal-value val))
        ((boolean generalized-boolean)
         (if (member val '(nil t))
             val

@@ -1,4 +1,8 @@
-
+2015-10-09 Russ Tyndall <russ@acceleration.net> 
+        * add decimals.lisp file https://github.com/tlikonen/cl-decimals
+	* use this for safe parsing of numeric / decimal / rational types
+	* Added because newer postgres print money types as currency strings
+	
 2015-08-12 Kevin Rosenberg <kevin@rosenberg.net>
 	* Version 6.6.3 release
 	* db-oracle/oracle-sql.lisp: Patch for PostgreSQL socket interface

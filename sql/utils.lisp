@@ -424,6 +424,26 @@ is replaced with replacement. [FROM http://cl-cookbook.sourceforge.net/strings.h
     (unless stream
       (get-output-stream-string out))))
 
+(defun read-decimal-value (string)
+  (let* ((comma 0)
+         (dot 0)
+         (last))
+    (loop for c across string
+          do (case c
+               (#\. (incf dot) (setf last 'dot))
+               (#\, (incf comma) (setf last 'comma))))
+    (let* ((bag (if (and (eql last 'dot) (eql dot 1))
+                    ".0123456789+-"
+                    ",0123456789+-"))
+           (clean (with-output-to-string (out)
+                    (loop for c across string
+                          do (when (find c bag :test #'char=)
+                               (write-char c out))))))
+      (if (and (eql last 'dot) (eql dot 1))
+          (decimals:parse-decimal-number clean)
+          (decimals:parse-decimal-number
+           clean :decimal-separator #\,)))))
+
 
 (defun filter-plist (plist &rest keys-to-remove)
   "Returns a copy of the given plist with indicated key-value pairs

@@ -66,5 +66,12 @@
        (list (clsql:sql [foo]) (clsql:sql [foo]) (clsql:sql [foo.bar])))
      ("FOO" "FOO" "FOO.BAR"))
 
-    ))
+    (deftest :currency/read-value/1
+      (list
+       (clsql-sys::read-decimal-value "$ 10,500.30")
+       (clsql-sys::read-decimal-value "$ 10.500,30")
+       (clsql-sys::read-decimal-value "-10 500,30")
+       (clsql-sys::read-decimal-value "$ 10.500,30"))
+      (1050030/100 1050030/100 -1050030/100 1050030/100))
 
+    ))
