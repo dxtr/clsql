@@ -19,7 +19,7 @@
 #+lispworks (require "comm")
 
 (defpackage #:postgresql-socket
-  (:use #:cl md5)
+  (:use #:cl #:md5)
   (:export #:pgsql-ftype
            #:pgsql-ftype#bytea
            #:pgsql-ftype#int2
@@ -56,4 +56,3 @@
            #:copy-cursor-row
            #:skip-cursor-row
            ))
-

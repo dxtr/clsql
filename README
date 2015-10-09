@@ -3,7 +3,7 @@ Rosenberg. It includes both functional and object oriented subsystems
 for data definition and manipulation as well as an integrated symbolic
 SQL syntax.
 
-CLSQL supports a number of RDBMS and uses the UFFI (http://uffi.b9.com)
+CLSQL supports a number of RDBMS and uses the UFFI (http://uffi.kpe.io)
 library for compatibility with Allegro CL, Lispworks, CMUCL, SBCL and
 OpenMCL.
 
@@ -14,7 +14,7 @@ in 2004, development of has stopped on these incorporated projects.
   - Paul Meurer's SQL/ODBC
   - Cadabra's Oracle interface
 
-CLSQL's home is http://clsql.b9.com.
+CLSQL's home is http://clsql.kpe.io.
 
 Documentation is available as a PDF file in doc/clsql.pdf and as HTML
 files in doc/html.tar.gz.
@@ -24,7 +24,7 @@ CONTRIBUTING
 ------------
 
 If you would like to report a bug please do so through the clsql
-mailing list. http://lists.b9.com/mailman/listinfo/CLSQL
+mailing list. http://lists.kpe.io/mailman/listinfo/CLSQL
 
 Patches are welcome. It will be much easier for us to incorporate if
 you use [git](http://git-scm.com/). Please keep distinct changes in

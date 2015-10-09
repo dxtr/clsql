@@ -514,7 +514,7 @@ the length of that format.")
                  (oci-stmt-prepare (deref-vp stmthp)
                                    (deref-vp errhp)
                                    c-stmt-string
-                                   (uffi:foreign-string-length c--stmt-string)
+                                   (uffi:foreign-string-length c-stmt-string)
                                    +oci-ntv-syntax+ +oci-default+ :database db)
                  (oci-attr-get (deref-vp stmthp)
                                +oci-htype-stmt+

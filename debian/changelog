@@ -1,8 +1,27 @@
+cl-sql (6.6.3-1) unstable; urgency=medium
+
+  * New upstream
+  * Use gcc for linking (closes:755064)
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Sat, 29 Aug 2015 18:13:55 -0600
+
+cl-sql (6.6.2-1) unstable; urgency=medium
+
+  * New upstream
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Mon, 30 Mar 2015 14:46:53 -0600
+
+cl-sql (6.6.1-1) unstable; urgency=medium
+
+  * {uffi,db-mysql}/Makefile: Change build hardening to +all,-pie
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Wed, 18 Mar 2015 21:30:11 -0600
+
 cl-sql (6.6.0-1) unstable; urgency=medium
 
   * New upstream
   * {uffi,db-mysql}/Makefile: Add build hardening
-  
+
  -- Kevin M. Rosenberg <kmr@debian.org>  Thu, 26 Feb 2015 15:32:46 -0700
 
 cl-sql (6.5.0-1) unstable; urgency=low
