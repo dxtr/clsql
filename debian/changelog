@@ -1,3 +1,10 @@
+cl-sql (6.6.3-2) unstable; urgency=medium
+
+  * Improve building/linking on non-AMD64 architectures, thanks to
+  Edmund Grimley Evans and Dejan Latinovic (closes:798017)
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Thu, 10 Dec 2015 12:10:32 -0700
+
 cl-sql (6.6.3-1) unstable; urgency=medium
 
   * New upstream

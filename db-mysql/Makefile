@@ -71,7 +71,7 @@ else
 	    -gcc $(LDFLAGS) -fPIC -shared -Wl,-soname=$(base) -lc $(object) $(LDFLAGS32) -o $(shared_lib)
           else
 	    gcc $(CFLAGS) -fPIC -c $(source) -o $(object)
-	    gcc -m32 $(LDFLAGS) -fPIC  -shared -Wl,-soname=$(base) -lc $(object) $(LDFLAGS) -o $(shared_lib)
+	    gcc -fPIC -shared -Wl,-soname=$(base)  $(object) $(LDFLAGS) -o $(shared_lib)
           endif
         endif
       endif
