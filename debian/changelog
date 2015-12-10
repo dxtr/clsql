@@ -1,3 +1,10 @@
+cl-sql (6.6.3-3) unstable; urgency=medium
+
+  * debian/rules: Separate install target to install-indep and
+    install-arch (closes:806609)
+
+ -- Kevin M. Rosenberg <kmr@debian.org>  Thu, 10 Dec 2015 12:35:59 -0700
+
 cl-sql (6.6.3-2) unstable; urgency=medium
 
   * Improve building/linking on non-AMD64 architectures, thanks to
