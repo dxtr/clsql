@@ -109,6 +109,7 @@
       (etypecase host
         (null
          "localhost")
+        (keyword "unix")
         (pathname (namestring host))
         (string host))
       (when port
