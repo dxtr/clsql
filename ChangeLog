@@ -1,3 +1,8 @@
+2016-01-17 Russ Tyndall <russ@acceleration.net> 
+        * applied patches from Javeier Olaechea
+	* allows unix socket connections in clsql-postgressql-socket3
+	* modernize asd slightly
+
 2015-10-09 Russ Tyndall <russ@acceleration.net> 
         * add decimals.lisp file https://github.com/tlikonen/cl-decimals
 	* use this for safe parsing of numeric / decimal / rational types
