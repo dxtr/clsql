@@ -85,19 +85,17 @@ clean:
 	rm -rf doc/html
 	dh_clean
 
-install: DH_OPTIONS=
-install: build
+install: DH_OPTIONS= install-indep install-arch
+
+install-indep: 
 	dh_testdir
 	dh_testroot
 	dh_prep
 	dh_installdirs
-
 	dh_installdirs --all $(clc-source)
 	dh_installdirs -p $(pkg) $(lispdir-sql) etc
-	dh_installdirs -p $(pkg-uffi) $(lispdir-uffi) $(sodir-uffi)
 	dh_installdirs -p $(pkg-pg) $(lispdir-pg)
 	dh_installdirs -p $(pkg-pg-socket) $(lispdir-pg-socket)
-	dh_installdirs -p $(pkg-mysql) $(lispdir-mysql) $(sodir-mysql)
 	dh_installdirs -p $(pkg-aodbc) $(lispdir-aodbc)
 	dh_installdirs -p $(pkg-odbc) $(lispdir-odbc)
 	dh_installdirs -p $(pkg-sqlite) $(lispdir-sqlite)
@@ -110,15 +108,6 @@ install: build
 	dh_install -p $(pkg) clsql.asd $(clc-clsql)
 	dh_install -p $(pkg) debian/clsql-init.lisp etc
 
-	# UFFI
-	dh_install -p $(pkg-uffi) $(srcs-uffi) $(lispdir-uffi)
-	dh_install -p $(pkg-uffi) $(srcs-uffi-so) $(sodir-uffi)
-	dh_install -p $(pkg-uffi) clsql-uffi.asd $(clc-uffi)
-
-	# Backends
-	dh_install -p $(pkg-mysql) $(srcs-mysql) $(lispdir-mysql)
-	dh_install -p $(pkg-mysql) clsql-mysql.asd $(clc-mysql)
-	dh_install -p $(pkg-mysql) $(srcs-mysql-so) $(sodir-mysql)
 	dh_install -p $(pkg-pg) $(srcs-pg) $(lispdir-pg)
 	dh_install -p $(pkg-pg) clsql-postgresql.asd $(clc-pg)
 	dh_install -p $(pkg-pg-socket) $(srcs-pg-socket) $(lispdir-pg-socket)
@@ -141,7 +130,26 @@ install: build
 	rm -rf doc/html
 	(cd doc; tar xzf html.tar.gz; cd ..)
 
-binary-indep: install
+install-arch: 
+	dh_testdir
+	dh_testroot
+	dh_prep
+	dh_installdirs
+
+	dh_installdirs -p $(pkg-uffi) $(lispdir-uffi) $(sodir-uffi)
+	dh_installdirs -p $(pkg-mysql) $(lispdir-mysql) $(sodir-mysql)
+
+	# UFFI
+	dh_install -p $(pkg-uffi) $(srcs-uffi) $(lispdir-uffi)
+	dh_install -p $(pkg-uffi) $(srcs-uffi-so) $(sodir-uffi)
+	dh_install -p $(pkg-uffi) clsql-uffi.asd $(clc-uffi)
+
+	# Backends
+	dh_install -p $(pkg-mysql) $(srcs-mysql) $(lispdir-mysql)
+	dh_install -p $(pkg-mysql) clsql-mysql.asd $(clc-mysql)
+	dh_install -p $(pkg-mysql) $(srcs-mysql-so) $(sodir-mysql)
+
+binary-indep: install-indep
 	dh_testdir -i
 	dh_testroot -i
 	dh_installdocs -i -p $(pkg) doc/html doc/clsql.pdf
@@ -155,7 +163,7 @@ binary-indep: install
 	dh_md5sums -i
 	dh_builddeb -i
 
-binary-arch: install
+binary-arch: install-arch
 	dh_testdir -a
 	dh_testroot -a
 	dh_installdocs -a
