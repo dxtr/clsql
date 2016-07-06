@@ -46,6 +46,8 @@
          (pushnew :mysql-client-v5.1 cl:*features*)))
       ((eql (schar *mysql-client-info* 0) #\6)
        (pushnew :mysql-client-v6 cl:*features*))
+      ((> (mismatch mysql::*mysql-client-info* "MariaDB" :from-end t) 0)
+       (pushnew :mysql-client-v6 cl:*features*))
       (t
        (error "Unknown mysql client version '~A'." *mysql-client-info*)))))
 
